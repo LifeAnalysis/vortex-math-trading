@@ -141,6 +141,54 @@ function renderPriceChartWithVortex(data) {
     addTradeSignals(tvChart, tvSeries, lineData);
 }
 
+function addTradeSignals(chart, series, dataPoints) {
+    try {
+        // Create trade signals based on vortex math rules
+        const buySignal = 1;  // Digital root 1 = cycle start
+        const sellSignal = 5; // Digital root 5 = cycle peak
+        const holdSignal = 9; // Digital root 9 = balance
+        
+        const markers = [];
+        
+        dataPoints.forEach(point => {
+            if (point.digitalRoot === buySignal) {
+                markers.push({
+                    time: point.time,
+                    position: 'belowBar',
+                    color: '#28a745',
+                    shape: 'arrowUp',
+                    text: 'BUY'
+                });
+            } else if (point.digitalRoot === sellSignal) {
+                markers.push({
+                    time: point.time,
+                    position: 'aboveBar',
+                    color: '#dc3545',
+                    shape: 'arrowDown',
+                    text: 'SELL'
+                });
+            } else if (point.digitalRoot === holdSignal) {
+                markers.push({
+                    time: point.time,
+                    position: 'inBar',
+                    color: '#ffc107',
+                    shape: 'circle',
+                    text: 'HOLD'
+                });
+            }
+        });
+        
+        if (markers.length > 0) {
+            // Sample markers to avoid overcrowding (every 10th signal)
+            const sampledMarkers = markers.filter((_, index) => index % 10 === 0);
+            series.setMarkers(sampledMarkers);
+            console.log(`[charts] Added ${sampledMarkers.length} trade signal markers`);
+        }
+    } catch (err) {
+        console.error('[charts] Error adding trade signals:', err);
+    }
+}
+
 function drawVortexLabels(container, chart, dataPoints) {
     // Remove old labels if any
     const old = container.querySelectorAll('.vortex-label');
@@ -217,54 +265,6 @@ function drawVortexLabels(container, chart, dataPoints) {
         console.log(`[charts] Drew ${sampledData.length} vortex labels`);
     } catch (err) {
         console.error('[charts] Error in drawVortexLabels:', err);
-    }
-}
-
-function addTradeSignals(chart, series, dataPoints) {
-    try {
-        // Create trade signals based on vortex math rules
-        const buySignal = 1;  // Digital root 1 = cycle start
-        const sellSignal = 5; // Digital root 5 = cycle peak
-        const holdSignal = 9; // Digital root 9 = balance
-        
-        const markers = [];
-        
-        dataPoints.forEach(point => {
-            if (point.digitalRoot === buySignal) {
-                markers.push({
-                    time: point.time,
-                    position: 'belowBar',
-                    color: '#28a745',
-                    shape: 'arrowUp',
-                    text: 'BUY'
-                });
-            } else if (point.digitalRoot === sellSignal) {
-                markers.push({
-                    time: point.time,
-                    position: 'aboveBar',
-                    color: '#dc3545',
-                    shape: 'arrowDown',
-                    text: 'SELL'
-                });
-            } else if (point.digitalRoot === holdSignal) {
-                markers.push({
-                    time: point.time,
-                    position: 'inBar',
-                    color: '#ffc107',
-                    shape: 'circle',
-                    text: 'HOLD'
-                });
-            }
-        });
-        
-        if (markers.length > 0) {
-            // Sample markers to avoid overcrowding (every 10th signal)
-            const sampledMarkers = markers.filter((_, index) => index % 10 === 0);
-            series.setMarkers(sampledMarkers);
-            console.log(`[charts] Added ${sampledMarkers.length} trade signal markers`);
-        }
-    } catch (err) {
-        console.error('[charts] Error adding trade signals:', err);
     }
 }
 
