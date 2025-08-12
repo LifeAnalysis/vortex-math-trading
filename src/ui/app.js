@@ -124,12 +124,20 @@ async function onCryptocurrencyChange() {
         tradingViewChart = null;
     }
     
+    // Hide results while loading new data
+    hideResults();
+    
     // Reload data for new cryptocurrency
     await loadHistoricalData();
     
+    // Update date ranges to match new cryptocurrency data
+    if (processedData && processedData.dailyData) {
+        updateDateInputLimits(processedData.dailyData, true); // true = update input values
+    }
+    
     // Update chart title or other UI elements as needed
     const cryptoName = appState.config.cryptocurrency === 'bitcoin' ? 'Bitcoin (BTC)' : 'Solana (SOL)';
-    showNotification(`Switched to ${cryptoName}`, 'info');
+    showNotification(`Switched to ${cryptoName} - dates updated to available range`, 'info');
 }
 
 /**
@@ -483,8 +491,9 @@ async function tryRenderChart() {
 /**
  * Update date input limits based on actual data availability
  * @param {Array} dailyData - The processed daily data array
+ * @param {boolean} updateValues - Whether to update the actual input values to span the full range
  */
-function updateDateInputLimits(dailyData) {
+function updateDateInputLimits(dailyData, updateValues = false) {
     if (!dailyData || dailyData.length === 0) return;
     
     const firstDate = new Date(dailyData[0].timestamp).toISOString().split('T')[0];
@@ -496,13 +505,34 @@ function updateDateInputLimits(dailyData) {
     if (startDateInput) {
         startDateInput.min = firstDate;
         startDateInput.max = lastDate;
+        
+        // Update the actual values if requested (e.g., when changing cryptocurrencies)
+        if (updateValues) {
+            startDateInput.value = firstDate;
+            console.log('[app] Updated start date value to:', firstDate);
+        }
+        
         console.log('[app] Set start date limits:', firstDate, 'to', lastDate);
     }
     
     if (endDateInput) {
         endDateInput.min = firstDate;
         endDateInput.max = lastDate;
+        
+        // Update the actual values if requested (e.g., when changing cryptocurrencies)
+        if (updateValues) {
+            endDateInput.value = lastDate;
+            console.log('[app] Updated end date value to:', lastDate);
+        }
+        
         console.log('[app] Set end date limits:', firstDate, 'to', lastDate);
+    }
+    
+    // Update app state config if values were changed
+    if (updateValues) {
+        appState.config.startDate = firstDate;
+        appState.config.endDate = lastDate;
+        console.log('[app] Updated app state dates:', firstDate, 'to', lastDate);
     }
 }
 
