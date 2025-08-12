@@ -16,7 +16,7 @@ const appState = {
         sellSignal: 5,
         holdSignal: 9,
         initialCapital: 10000,
-        startDate: '2024-01-01',
+        startDate: '2020-01-01',
         endDate: '2024-12-31',
         teslaFilter: true,
         sequenceFilter: true,
@@ -164,8 +164,8 @@ function switchTab(tabName) {
  */
 async function loadHistoricalData() {
     try {
-        console.log('[app] Loading fresh 2024 BTC data from CoinGecko...');
-        const res = await fetch('/src/data/btc-2024-data.json', { cache: 'no-store' });
+        console.log('[app] Loading complete Bitcoin dataset (2020-2024)...');
+        const res = await fetch('/src/data/btc-historical-data.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.json();
 
@@ -176,12 +176,14 @@ async function loadHistoricalData() {
 
         console.log('[app] Loaded records:', processedData.metadata.totalRecords);
         console.log('[app] Date range:', raw.metadata.period);
+        const prices = raw.prices.map(([_, price]) => price);
         console.log('[app] Price range: $' + 
-            Math.min(...raw.data.map(d => d.price)).toFixed(2) + 
+            Math.min(...prices).toFixed(2) + 
             ' - $' + 
-            Math.max(...raw.data.map(d => d.price)).toFixed(2)
+            Math.max(...prices).toFixed(2)
         );
-        showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records from CoinGecko 2024`, 'success');
+        console.log('[app] Total return since 2020:', (((prices[prices.length-1] - prices[0]) / prices[0]) * 100).toFixed(2) + '%');
+        showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records (2020-2024)`, 'success');
     } catch (error) {
         console.error('Error loading historical data:', error);
         showNotification('Error loading data. Please check console for details.', 'error');
