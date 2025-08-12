@@ -74,29 +74,27 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart object created:', tvChart);
         console.log('[charts] Available methods on chart:', Object.getOwnPropertyNames(tvChart));
         
-        // Use candlestick series for professional trading visualization
-        if (typeof tvChart.addCandlestickSeries === 'function') {
-            console.log('[charts] Using addCandlestickSeries method');
-            tvSeries = tvChart.addCandlestickSeries({
-                upColor: '#00ff88',
-                downColor: '#ff4757',
-                borderUpColor: '#00ff88',
-                borderDownColor: '#ff4757',
-                wickUpColor: '#00ff88',
-                wickDownColor: '#ff4757',
-                borderVisible: true,
-                wickVisible: true,
+        // Use line series for clean, continuous visualization
+        if (typeof tvChart.addLineSeries === 'function') {
+            console.log('[charts] Using addLineSeries method');
+            tvSeries = tvChart.addLineSeries({
+                color: '#87CEEB', // Light blue color
+                lineWidth: 2,
                 priceLineVisible: true,
-                lastValueVisible: true
+                lastValueVisible: true,
+                crosshairMarkerVisible: true,
+                crosshairMarkerRadius: 4,
+                crosshairMarkerBorderColor: '#87CEEB',
+                crosshairMarkerBackgroundColor: '#87CEEB'
             });
         } else if (typeof tvChart.addSeries === 'function') {
-            console.log('[charts] Using addSeries method with CandlestickSeries');
-            tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
-                upColor: '#00ff88',
-                downColor: '#ff4757'
+            console.log('[charts] Using addSeries method with LineSeries');
+            tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
+                color: '#87CEEB', // Light blue color
+                lineWidth: 2
             });
         } else {
-            console.error('[charts] No suitable method found for adding candlestick series');
+            console.error('[charts] No suitable method found for adding line series');
             console.log('[charts] LightweightCharts object:', LightweightCharts);
             return;
         }
@@ -104,7 +102,7 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Series created:', tvSeries);
         console.log('[charts] Series type:', typeof tvSeries);
         if (!tvSeries) {
-            console.error('[charts] Failed to create candlestick series');
+            console.error('[charts] Failed to create line series');
             return;
         }
         console.log('[charts] Chart and series created successfully');
@@ -113,22 +111,19 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Map data to OHLC format for candlesticks
-    const candleData = data.map(d => ({
+    // Map data to simple time-value format for line chart
+    const lineData = data.map(d => ({
         time: Math.floor(d.timestamp / 1000),
-        open: d.open ?? d.price,
-        high: d.high ?? d.price * 1.005, // Add small variation for better visualization
-        low: d.low ?? d.price * 0.995,
-        close: d.price,
+        value: d.price,
         digitalRoot: d.digitalRoot,
         date: d.date
-    })).filter(d => d.time && d.close && !isNaN(d.close));
+    })).filter(d => d.time && d.value && !isNaN(d.value));
 
-    console.log('[charts] setting candle data', candleData.length);
-    console.log('[charts] sample candle data:', candleData.slice(0, 3));
+    console.log('[charts] setting line data', lineData.length);
+    console.log('[charts] sample line data:', lineData.slice(0, 3));
     
-    if (candleData.length === 0) {
-        console.error('[charts] No valid candle data to display');
+    if (lineData.length === 0) {
+        console.error('[charts] No valid line data to display');
         return;
     }
     
@@ -138,7 +133,7 @@ function renderPriceChartWithVortex(data) {
     }
     
     try {
-        tvSeries.setData(candleData);
+        tvSeries.setData(lineData);
         console.log('[charts] Chart data set successfully');
     } catch (err) {
         console.error('[charts] Error setting chart data:', err);
@@ -146,11 +141,11 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Draw digital root labels above each candle
-    drawVortexLabels(container, tvChart, candleData);
+    // Draw digital root labels above each data point
+    drawVortexLabels(container, tvChart, lineData);
     
     // Add trade signals if available
-    addTradeSignals(tvChart, tvSeries, candleData);
+    addTradeSignals(tvChart, tvSeries, lineData);
 }
 
 function addTradeSignals(chart, series, dataPoints) {
@@ -239,7 +234,7 @@ function drawVortexLabels(container, chart, dataPoints) {
             
             // Draw buy signals (1) as green circles with numbers
             buySignals.forEach(point => {
-                const { x, y } = coordinateToScreen(point.time, point.high || point.close);
+                const { x, y } = coordinateToScreen(point.time, point.value);
                 if (x == null || y == null || x < 0 || y < 0) return;
 
                 // Get container position for proper relative positioning
@@ -274,7 +269,7 @@ function drawVortexLabels(container, chart, dataPoints) {
 
             // Draw sell signals (5) as red circles with numbers
             sellSignals.forEach(point => {
-                const { x, y } = coordinateToScreen(point.time, point.high || point.close);
+                const { x, y } = coordinateToScreen(point.time, point.value);
                 if (x == null || y == null || x < 0 || y < 0) return;
 
                 // Get container position for proper relative positioning
