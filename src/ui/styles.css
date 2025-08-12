@@ -589,4 +589,98 @@ header h1 {
         page-break-inside: avoid;
     }
 }
+
+/* TradingView Chart Styles */
+#tradingview-chart {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 500px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success {
+    background: linear-gradient(45deg, #00C851, #00a846);
+}
+
+.notification-error {
+    background: linear-gradient(45deg, #ff4444, #e63939);
+}
+
+.notification-warning {
+    background: linear-gradient(45deg, #ffbb33, #ff8800);
+}
+
+.notification-info {
+    background: linear-gradient(45deg, #33b5e5, #0099cc);
+}
+
+/* Trade Table Styles */
+.trades-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.trades-table th,
+.trades-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.trade-buy {
+    background: #00C851;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.trade-sell {
+    background: #ff4444;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.positive {
+    color: #00C851;
+    font-weight: 600;
+}
+
+.negative {
+    color: #ff4444;
+    font-weight: 600;
 }
