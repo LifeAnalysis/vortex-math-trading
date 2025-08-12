@@ -21,7 +21,6 @@ const appState = {
         endDate: '2025-08-12',
         teslaFilter: true,
         sequenceFilter: true,
-        positionSize: 1.0,
         feePercent: 0.10,
         slippageBps: 5
     },
@@ -53,7 +52,6 @@ function setupEventListeners() {
     document.getElementById('end-date')?.addEventListener('change', updateConfigFromForm);
     document.getElementById('tesla-filter')?.addEventListener('change', updateConfigFromForm);
     document.getElementById('sequence-filter')?.addEventListener('change', updateConfigFromForm);
-    document.getElementById('position-size')?.addEventListener('input', updateConfigFromForm);
 
 
     
@@ -106,7 +104,6 @@ function updateConfigFromForm() {
         endDate: document.getElementById('end-date')?.value || '2025-08-12',
         teslaFilter: document.getElementById('tesla-filter')?.checked || false,
         sequenceFilter: document.getElementById('sequence-filter')?.checked || false,
-        positionSize: parseFloat(document.getElementById('position-size')?.value || 1.0),
         feePercent: 0.10,
         slippageBps: 5
     };
@@ -148,7 +145,6 @@ function resetConfig() {
     document.getElementById('end-date').value = '2025-08-12';
     document.getElementById('tesla-filter').checked = true;
     document.getElementById('sequence-filter').checked = true;
-    document.getElementById('position-size').value = 1.0;
 
 
     
@@ -246,7 +242,6 @@ async function runBacktest() {
             holdSignal: appState.config.holdSignal,
             useTeslaFilter: appState.config.teslaFilter,
             useSequenceFilter: appState.config.sequenceFilter,
-            maxPositionSize: appState.config.positionSize,
 
         });
 

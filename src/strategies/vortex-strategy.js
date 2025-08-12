@@ -27,10 +27,6 @@ class VortexStrategy {
             useTeslaFilter: true,     // Consider 3-6-9 patterns
             useSequenceFilter: true,  // Only trade on doubling sequence
             minimumHoldPeriod: 1,     // Minimum days to hold position
-            maxPositionSize: 1.0,     // Maximum position as fraction of capital
-            
-            // Position management
-            positionSize: 1.0,        // Position size as fraction of capital
             
             // Trading costs
             feePercent: 0.10,         // Fee percentage per side
@@ -249,7 +245,7 @@ class VortexStrategy {
             digitalRoot: dataPoint.digitalRoot,
             capital: capital,
             shares: shares,  // Actual shares bought
-            size: this.config.maxPositionSize  // Keep for backward compatibility
+            size: 1.0  // Full position size (position sizing removed)
         };
     }
     
