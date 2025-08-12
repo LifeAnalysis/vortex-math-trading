@@ -25,6 +25,11 @@ function renderPriceChartWithVortex(data) {
     // Always recreate chart to avoid state issues
     if (tvChart) {
         console.log('[charts] Removing existing chart');
+        // Cleanup label event listeners
+        if (container._cleanupLabels) {
+            container._cleanupLabels();
+            container._cleanupLabels = null;
+        }
         tvChart.remove();
         tvChart = null;
         tvSeries = null;
@@ -69,25 +74,29 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart object created:', tvChart);
         console.log('[charts] Available methods on chart:', Object.getOwnPropertyNames(tvChart));
         
-        // Use line series for better backtesting visualization
-        if (typeof tvChart.addLineSeries === 'function') {
-            console.log('[charts] Using addLineSeries method');
-            tvSeries = tvChart.addLineSeries({
-                color: '#2962FF',
-                lineWidth: 2,
-                crosshairMarkerVisible: true,
-                crosshairMarkerRadius: 6,
+        // Use candlestick series for professional trading visualization
+        if (typeof tvChart.addCandlestickSeries === 'function') {
+            console.log('[charts] Using addCandlestickSeries method');
+            tvSeries = tvChart.addCandlestickSeries({
+                upColor: '#26a69a',
+                downColor: '#ef5350',
+                borderUpColor: '#26a69a',
+                borderDownColor: '#ef5350',
+                wickUpColor: '#26a69a',
+                wickDownColor: '#ef5350',
+                borderVisible: true,
+                wickVisible: true,
                 priceLineVisible: true,
                 lastValueVisible: true
             });
         } else if (typeof tvChart.addSeries === 'function') {
-            console.log('[charts] Using addSeries method with LineSeries');
-            tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
-                color: '#2962FF',
-                lineWidth: 2
+            console.log('[charts] Using addSeries method with CandlestickSeries');
+            tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
+                upColor: '#26a69a',
+                downColor: '#ef5350'
             });
         } else {
-            console.error('[charts] No suitable method found for adding line series');
+            console.error('[charts] No suitable method found for adding candlestick series');
             console.log('[charts] LightweightCharts object:', LightweightCharts);
             return;
         }
@@ -104,19 +113,22 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Map data to line chart format (time/value)
-    const lineData = data.map(d => ({
+    // Map data to OHLC format for candlesticks
+    const candleData = data.map(d => ({
         time: Math.floor(d.timestamp / 1000),
-        value: d.price,
+        open: d.open ?? d.price,
+        high: d.high ?? d.price * 1.005, // Add small variation for better visualization
+        low: d.low ?? d.price * 0.995,
+        close: d.price,
         digitalRoot: d.digitalRoot,
         date: d.date
-    })).filter(d => d.time && d.value && !isNaN(d.value));
+    })).filter(d => d.time && d.close && !isNaN(d.close));
 
-    console.log('[charts] setting line data', lineData.length);
-    console.log('[charts] sample line data:', lineData.slice(0, 3));
+    console.log('[charts] setting candle data', candleData.length);
+    console.log('[charts] sample candle data:', candleData.slice(0, 3));
     
-    if (lineData.length === 0) {
-        console.error('[charts] No valid line data to display');
+    if (candleData.length === 0) {
+        console.error('[charts] No valid candle data to display');
         return;
     }
     
@@ -126,7 +138,7 @@ function renderPriceChartWithVortex(data) {
     }
     
     try {
-        tvSeries.setData(lineData);
+        tvSeries.setData(candleData);
         console.log('[charts] Chart data set successfully');
     } catch (err) {
         console.error('[charts] Error setting chart data:', err);
@@ -134,11 +146,11 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Draw digital root labels above each price point
-    drawVortexLabels(container, tvChart, lineData);
+    // Draw digital root labels above each candle
+    drawVortexLabels(container, tvChart, candleData);
     
     // Add trade signals if available
-    addTradeSignals(tvChart, tvSeries, lineData);
+    addTradeSignals(tvChart, tvSeries, candleData);
 }
 
 function addTradeSignals(chart, series, dataPoints) {
@@ -197,75 +209,119 @@ function drawVortexLabels(container, chart, dataPoints) {
     const timeScale = chart.timeScale();
     
     try {
-        // Get the line series from chart
+        // Get the candlestick series from chart
         const series = tvSeries;
         if (!series) {
             console.error('[charts] No series available for coordinate conversion');
             return;
         }
 
-        const coordinateToScreen = (time, price) => {
-            try {
-                const x = timeScale.timeToCoordinate(time);
-                const y = series.priceToCoordinate(price);
-                return { x, y };
-            } catch (err) {
-                console.warn('[charts] Coordinate conversion failed:', err);
-                return { x: null, y: null };
-            }
+        const updateLabels = () => {
+            // Clear existing labels
+            const existingLabels = container.querySelectorAll('.vortex-label');
+            existingLabels.forEach(el => el.remove());
+
+            const coordinateToScreen = (time, price) => {
+                try {
+                    const x = timeScale.timeToCoordinate(time);
+                    const y = series.priceToCoordinate(price);
+                    return { x, y };
+                } catch (err) {
+                    console.warn('[charts] Coordinate conversion failed:', err);
+                    return { x: null, y: null };
+                }
+            };
+
+            // Sample data points more intelligently based on zoom level
+            const visibleRange = timeScale.getVisibleLogicalRange();
+            const totalPoints = dataPoints.length;
+            const visiblePoints = visibleRange ? (visibleRange.to - visibleRange.from) : totalPoints;
+            const sampleRate = Math.max(1, Math.floor(visiblePoints / 20)); // Show max 20 labels
+            
+            const sampledData = dataPoints.filter((_, index) => index % sampleRate === 0);
+            
+            sampledData.forEach(point => {
+                const { x, y } = coordinateToScreen(point.time, point.high || point.close);
+                if (x == null || y == null) return;
+
+                const label = document.createElement('div');
+                label.className = 'vortex-label';
+                label.textContent = String(point.digitalRoot ?? '');
+                label.style.position = 'absolute';
+                label.style.left = `${Math.round(x)}px`;
+                label.style.top = `${Math.round(y - 35)}px`; // Position above candle
+                label.style.transform = 'translate(-50%, -100%)';
+                label.style.padding = '3px 6px';
+                label.style.fontSize = '11px';
+                label.style.fontWeight = 'bold';
+                label.style.borderRadius = '3px';
+                label.style.pointerEvents = 'none';
+                label.style.background = '#ffffff';
+                label.style.color = '#333';
+                label.style.border = '1px solid #333';
+                label.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+                label.style.zIndex = '1000';
+                label.style.minWidth = '16px';
+                label.style.textAlign = 'center';
+
+                // Color-code by vortex significance with cleaner design
+                if (point.digitalRoot === 1) {
+                    label.style.background = '#28a745'; // Green for cycle start
+                    label.style.color = '#fff';
+                    label.style.borderColor = '#1e7e34';
+                } else if (point.digitalRoot === 5) {
+                    label.style.background = '#dc3545'; // Red for cycle peak
+                    label.style.color = '#fff';
+                    label.style.borderColor = '#c82333';
+                } else if (point.digitalRoot === 9) {
+                    label.style.background = '#ffc107'; // Yellow for balance
+                    label.style.color = '#212529';
+                    label.style.borderColor = '#e0a800';
+                } else if (point.digitalRoot === 3 || point.digitalRoot === 6) {
+                    label.style.background = '#6f42c1'; // Purple for Tesla numbers
+                    label.style.color = '#fff';
+                    label.style.borderColor = '#59359a';
+                } else {
+                    // Default styling for other numbers
+                    label.style.background = '#f8f9fa';
+                    label.style.color = '#495057';
+                    label.style.borderColor = '#dee2e6';
+                }
+
+                container.appendChild(label);
+            });
+            
+            console.log(`[charts] Drew ${sampledData.length} vortex labels (sample rate: ${sampleRate})`);
         };
 
-        // Sample data points to avoid overcrowding (show every 5th point)
-        const sampledData = dataPoints.filter((_, index) => index % 5 === 0);
+        // Initial label drawing
+        updateLabels();
+
+        // Add event listeners to redraw labels on zoom/pan
+        const debouncedUpdate = debounce(updateLabels, 100);
+        timeScale.subscribeVisibleLogicalRangeChange(debouncedUpdate);
         
-        sampledData.forEach(point => {
-            const { x, y } = coordinateToScreen(point.time, point.value);
-            if (x == null || y == null) return;
-
-            const label = document.createElement('div');
-            label.className = 'vortex-label';
-            label.textContent = String(point.digitalRoot ?? '');
-            label.style.position = 'absolute';
-            label.style.left = `${Math.round(x)}px`;
-            label.style.top = `${Math.round(y - 30)}px`;
-            label.style.transform = 'translate(-50%, -100%)';
-            label.style.padding = '4px 6px';
-            label.style.fontSize = '12px';
-            label.style.fontWeight = 'bold';
-            label.style.borderRadius = '4px';
-            label.style.pointerEvents = 'none';
-            label.style.background = '#ffffff';
-            label.style.color = '#333';
-            label.style.border = '2px solid #333';
-            label.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-            label.style.zIndex = '1000';
-
-            // Color-code by vortex significance
-            if (point.digitalRoot === 1) {
-                label.style.background = '#28a745'; // Green for cycle start
-                label.style.color = '#fff';
-                label.style.borderColor = '#28a745';
-            } else if (point.digitalRoot === 5) {
-                label.style.background = '#dc3545'; // Red for cycle peak
-                label.style.color = '#fff';
-                label.style.borderColor = '#dc3545';
-            } else if (point.digitalRoot === 9) {
-                label.style.background = '#ffc107'; // Yellow for balance
-                label.style.color = '#333';
-                label.style.borderColor = '#ffc107';
-            } else if (point.digitalRoot === 3 || point.digitalRoot === 6) {
-                label.style.background = '#6f42c1'; // Purple for Tesla numbers
-                label.style.color = '#fff';
-                label.style.borderColor = '#6f42c1';
-            }
-
-            container.appendChild(label);
-        });
+        // Store cleanup function for later use
+        container._cleanupLabels = () => {
+            timeScale.unsubscribeVisibleLogicalRangeChange(debouncedUpdate);
+        };
         
-        console.log(`[charts] Drew ${sampledData.length} vortex labels`);
     } catch (err) {
         console.error('[charts] Error in drawVortexLabels:', err);
     }
+}
+
+// Debounce function to limit label updates during zoom/pan
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 // Expose API to window
