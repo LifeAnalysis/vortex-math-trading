@@ -15,6 +15,26 @@
             <p class="subtitle">Mathematical Pattern Backtesting Tool</p>
         </header>
 
+        <!-- Strategy Information -->
+        <section class="strategy-info">
+            <h3>About this Strategy</h3>
+            <p>
+                This experimental system applies vortex mathematics to market prices:
+                it computes digital roots (mod 9) and uses the classic doubling cycle
+                (1→2→4→8→7→5) for sequencing. Default rules are: BUY on 1 (cycle start),
+                SELL on 5 (cycle peak), HOLD on 9 (balance). Optional Tesla 3-6-9 filter
+                biases entries/exits and the doubling sequence filter constrains signals
+                to the canonical cycle. Include realistic assumptions via fees and slippage.
+            </p>
+            <ul>
+                <li><strong>Digital Root:</strong> price reduced via modulo 9 arithmetic</li>
+                <li><strong>Doubling Sequence:</strong> 1 → 2 → 4 → 8 → 7 → 5</li>
+                <li><strong>Tesla Filter:</strong> 3 (buy bias), 6 (sell bias), 9 (hold)</li>
+                <li><strong>Risk:</strong> stop loss / take profit / position size</li>
+                <li><strong>Costs:</strong> per-side fees and slippage (bps)</li>
+            </ul>
+        </section>
+
         <main>
             <!-- Backtesting Configuration -->
             <section class="config-section">
@@ -109,24 +129,7 @@
                     <button id="reset-config" class="btn-secondary">🔄 Reset</button>
                 </div>
 
-                <div class="strategy-info">
-                    <h3>About this Strategy</h3>
-                    <p>
-                        This experimental system applies vortex mathematics to market prices:
-                        it computes digital roots (mod 9) and uses the classic doubling cycle
-                        (1→2→4→8→7→5) for sequencing. Default rules are: BUY on 1 (cycle start),
-                        SELL on 5 (cycle peak), HOLD on 9 (balance). Optional Tesla 3-6-9 filter
-                        biases entries/exits and the doubling sequence filter constrains signals
-                        to the canonical cycle. Include realistic assumptions via fees and slippage.
-                    </p>
-                    <ul>
-                        <li><strong>Digital Root:</strong> price reduced via modulo 9 arithmetic</li>
-                        <li><strong>Doubling Sequence:</strong> 1 → 2 → 4 → 8 → 7 → 5</li>
-                        <li><strong>Tesla Filter:</strong> 3 (buy bias), 6 (sell bias), 9 (hold)</li>
-                        <li><strong>Risk:</strong> stop loss / take profit / position size</li>
-                        <li><strong>Costs:</strong> per-side fees and slippage (bps)</li>
-                    </ul>
-                </div>
+
             </section>
 
             <!-- Results Section -->
