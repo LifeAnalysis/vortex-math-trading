@@ -201,11 +201,15 @@ function renderPriceChartWithVortex(data) {
             console.log('[charts] Testing with minimal data first:', testData);
             tvSeries.setData(testData);
             
+            // Prepare minimal data for series (time/value only)
+            const seriesData = chartData.map(p => ({ time: p.time, value: p.value }));
+
             // Wait a moment then set real data
             setTimeout(() => {
                 console.log('[charts] Now setting real chart data...');
-                tvSeries.setData(chartData);
+                tvSeries.setData(seriesData);
                 console.log('[charts] Real data set on series');
+                try { tvSeries.applyOptions({ visible: true, color: '#87CEEB', lineColor: '#87CEEB', lineWidth: 3 }); } catch {}
             }, 100);
             console.log('[charts] Chart data set successfully on series');
             console.log('[charts] Chart data range - first:', chartData[0]);
