@@ -80,10 +80,10 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart methods available:', Object.getOwnPropertyNames(tvChart));
         
         try {
-            // Simple approach - just create the line series with minimal options
-            console.log('[charts] Creating basic line series');
+            // TradingView Lightweight Charts v5 API - use addSeries with series type
+            console.log('[charts] Creating line series using v5 API');
             
-            tvSeries = tvChart.addLineSeries({
+            tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
                 color: '#00ff88',
                 lineWidth: 2
             });
@@ -94,8 +94,8 @@ function renderPriceChartWithVortex(data) {
             console.error('[charts] Line series failed, trying area series:', lineError);
             
             try {
-                // Fallback to area series with minimal options
-                tvSeries = tvChart.addAreaSeries({
+                // Fallback to area series using v5 API
+                tvSeries = tvChart.addSeries(LightweightCharts.AreaSeries, {
                     lineColor: '#00ff88',
                     topColor: 'rgba(0, 255, 136, 0.4)',
                     bottomColor: 'rgba(0, 255, 136, 0.0)',
@@ -108,8 +108,8 @@ function renderPriceChartWithVortex(data) {
                 console.error('[charts] Area series also failed, trying candlestick:', areaError);
                 
                 try {
-                    // Last fallback to candlestick with minimal options
-                    tvSeries = tvChart.addCandlestickSeries({
+                    // Last fallback to candlestick using v5 API
+                    tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
                         upColor: '#00ff88',
                         downColor: '#ff4757'
                     });
@@ -119,10 +119,10 @@ function renderPriceChartWithVortex(data) {
                 } catch (candlestickError) {
                     console.error('[charts] All series types failed:', candlestickError);
                     
-                    // Ultimate fallback - try the old working approach we had before
+                    // Ultimate fallback - try basic series creation
                     try {
-                        console.log('[charts] Trying basic series creation without options');
-                        tvSeries = tvChart.addLineSeries();
+                        console.log('[charts] Trying basic line series creation without options');
+                        tvSeries = tvChart.addSeries(LightweightCharts.LineSeries);
                         if (tvSeries) {
                             console.log('[charts] Basic line series created successfully');
                         }
