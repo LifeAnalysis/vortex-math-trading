@@ -6,16 +6,21 @@
 - **Status:** Execution Phase - Task 1.1
 
 ## Project Overview
-Creating a trading backtesting system based on vortex math principles, specifically:
-- Digital root calculations for price analysis
-- Doubling sequence pattern recognition (1-2-4-8-7-5)
-- Tesla's 3-6-9 significance analysis
-- Backtesting framework with BTC historical data from CoinGecko API
+Creating a comprehensive vortex math trading backtesting system with advanced mathematical rigor:
+- **Modular Arithmetic Foundation**: Digital root ≡ n mod 9 with proper mathematical implementation
+- **Multiple Sequence Types**: Standard doubling (×2), tripling (×3), and custom multipliers
+- **Base Variations**: Compare base-8, base-10 patterns for robustness testing
+- **Tesla's 3-6-9 Analysis**: Oscillation patterns and "balance" point detection
+- **Statistical Validation**: Performance against random strategies, overfitting prevention
+- **Hybrid Strategies**: Integration with Fibonacci and technical indicators
+- **Critical Analysis**: Include mathematical critiques and limitations
 
 ## Lessons Learned
 *No lessons learned yet - project just started*
 
 ## Notes
-- Focus on simplicity and clear implementation
+- Focus on mathematical rigor while acknowledging vortex math limitations
+- Implement multiple approaches for comparison (base variations, multipliers)
+- Statistical validation is crucial - compare against random entry strategies
 - Start with UI first, then API integration
-- Use small vertical slices with testing at each step
+- Use small vertical slices with comprehensive testing at each step

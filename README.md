@@ -1,32 +1,27 @@
 # Vortex Math Trading System
 
-A research tool for exploring vortex mathematics principles in cryptocurrency trading analysis.
+A comprehensive backtesting system that applies vortex mathematics principles to cryptocurrency trading analysis.
 
 ## Overview
 
-This system implements Marko Rodin's vortex mathematics concepts for trading strategy backtesting, including:
+This system implements Marko Rodin's vortex mathematics concepts for trading strategy development, including:
 
-- **Digital Root Analysis**: Using modular arithmetic (n mod 9) for price pattern recognition
-- **Vortex Sequences**: Multiple sequence generators (×2, ×3, custom multipliers) 
-- **Tesla's 3-6-9 Patterns**: Special significance detection and oscillation analysis
-- **Base Variations**: Cross-base comparison (base-8 vs base-10)
-- **Backtesting Engine**: Complete strategy validation with statistical analysis
+- **Digital Root Analysis**: Modular arithmetic (n mod 9) for price pattern recognition
+- **Sequence Generation**: Multiple sequence types (×2, ×3, custom multipliers)
+- **Base Variations**: Comparison between base-8, base-10 numerical systems
+- **Tesla's 3-6-9 Patterns**: Special significance analysis and oscillation detection
+- **Statistical Validation**: Performance testing against random entry strategies
+- **Hybrid Strategies**: Integration with Fibonacci and technical indicators
 
-## Mathematical Foundation
+## ⚠️ Important Disclaimer
 
-Vortex math leverages modular arithmetic, specifically:
-- Digital root ≡ n mod 9 (with 0→9 conversion)
-- Doubling sequence: a_{k+1} = (2 × a_k) mod 9
-- Creates cyclic group of length 6: 1→2→4→8→7→5→1
+Vortex mathematics is considered pseudoscientific by mainstream mathematics and lacks empirical validation. This system is for **educational and research purposes only**. The mathematical critiques and limitations are acknowledged and discussed within the implementation.
 
-## Features
+## Quick Start
 
-- 🧮 **Advanced Mathematical Functions**: Modular arithmetic, multiple sequence types
-- 📊 **Real-Time Data**: CoinGecko API integration for historical cryptocurrency data
-- 📈 **Multiple Strategies**: Standard doubling, tripling, hybrid Fibonacci-vortex
-- 🔬 **Statistical Validation**: Performance comparison against random strategies
-- 🖥️ **Modern UI**: Clean, responsive interface for strategy configuration
-- 📋 **Comprehensive Analysis**: P&L, win/loss ratios, drawdown metrics
+1. **Development Server**: `npm run dev` - Starts local server at http://localhost:3000
+2. **Run Tests**: `npm test` - Execute the test suite
+3. **Open Browser**: Navigate to http://localhost:3000 to use the interface
 
 ## Project Structure
 
@@ -34,33 +29,53 @@ Vortex math leverages modular arithmetic, specifically:
 vortex/
 ├── src/
 │   ├── core/          # Core vortex math functions
-│   ├── ui/            # Frontend interface
 │   ├── data/          # Data fetching and processing
-│   └── strategies/    # Trading strategy implementations
-├── tests/             # Unit and integration tests
-├── public/            # Static assets and HTML
-├── assets/            # Images, styles, charts
-└── docs/              # Documentation and planning
+│   ├── strategies/    # Trading strategy implementations
+│   └── ui/            # User interface components
+├── tests/             # Test suite
+├── public/            # Static web assets
+├── assets/            # Additional resources
+└── docs/              # Documentation and implementation plans
 ```
 
-## Getting Started
+## Features
 
-1. Open `public/index.html` in your browser
-2. Configure strategy parameters
-3. Fetch historical data (BTC 2020-2023)
-4. Run backtesting analysis
-5. Review results and statistical validation
+### Mathematical Implementation
+- **Modular Arithmetic**: Proper n mod 9 calculations with 0→9 conversion
+- **Multiple Sequences**: Standard doubling, tripling, and custom multiplier sequences
+- **Cross-Base Analysis**: Compare patterns across different numerical bases
+- **Pattern Detection**: Automated recognition of vortex cycles and Tesla patterns
 
-## Disclaimer
+### Trading Analysis
+- **CoinGecko Integration**: Historical cryptocurrency data fetching
+- **Signal Generation**: Multiple vortex-based entry/exit strategies
+- **Backtesting Engine**: Complete P&L analysis with performance metrics
+- **Statistical Validation**: Comparison with random strategies and overfitting prevention
 
-⚠️ **Important**: Vortex math is considered speculative and lacks scientific rigor. This tool is for research and educational purposes only. Mathematical critics note it's based on "numeric pareidolia" and arbitrary base-10 patterns. Always validate results against proven trading methods and use appropriate risk management.
+### User Interface
+- **Interactive Charts**: Visualize price data with vortex pattern overlays
+- **Strategy Configuration**: Adjust parameters for different approaches
+- **Results Dashboard**: Comprehensive performance metrics and analysis
+- **Educational Content**: Mathematical explanations and critiques
 
-## Development Status
+## Technology Stack
 
-Current Phase: Core mathematical implementation
-- ✅ Project setup and documentation
-- 🔄 Advanced vortex math functions
-- ⏳ UI development
-- ⏳ Data integration
-- ⏳ Strategy implementation
-- ⏳ Backtesting engine
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Data Source**: CoinGecko API for cryptocurrency data
+- **Charts**: Chart.js for visualization
+- **Testing**: Custom JavaScript testing framework
+- **Deployment**: Static website (no backend required)
+
+## Development
+
+The project follows a test-driven development approach with comprehensive coverage of all mathematical functions. Each vortex math implementation includes both the calculation and its mathematical critique.
+
+## License
+
+MIT License - See LICENSE file for details.
+
+---
+
+*"If you only knew the magnificence of the 3, 6, and 9, then you would have the key to the universe."* - Nikola Tesla
+
+*Note: This quote is often attributed to Tesla but lacks historical verification. The system explores these concepts while maintaining scientific skepticism.*
