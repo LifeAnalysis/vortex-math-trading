@@ -22,7 +22,18 @@ class TestRunner {
 
     it(description, testFn) {
         try {
+            // Run beforeEach hooks
+            if (global._beforeEachHooks) {
+                global._beforeEachHooks.forEach(hook => hook());
+            }
+            
             testFn();
+            
+            // Run afterEach hooks
+            if (global._afterEachHooks) {
+                global._afterEachHooks.forEach(hook => hook());
+            }
+            
             this.passed++;
             console.log(`✅ ${description}`);
         } catch (error) {
@@ -59,6 +70,68 @@ class TestRunner {
             toBeFalsy: () => {
                 if (actual) {
                     throw new Error(`Expected ${actual} to be falsy`);
+                }
+            },
+            toBeGreaterThan: (expected) => {
+                if (actual <= expected) {
+                    throw new Error(`Expected ${actual} to be greater than ${expected}`);
+                }
+            },
+            toBeLessThan: (expected) => {
+                if (actual >= expected) {
+                    throw new Error(`Expected ${actual} to be less than ${expected}`);
+                }
+            },
+            toBeDefined: () => {
+                if (actual === undefined) {
+                    throw new Error(`Expected value to be defined, but got undefined`);
+                }
+            },
+            toContain: (expected) => {
+                if (typeof actual === 'string' && !actual.includes(expected)) {
+                    throw new Error(`Expected "${actual}" to contain "${expected}"`);
+                } else if (Array.isArray(actual) && !actual.includes(expected)) {
+                    throw new Error(`Expected array to contain ${expected}`);
+                }
+            },
+            toBeLessThanOrEqual: (expected) => {
+                if (actual > expected) {
+                    throw new Error(`Expected ${actual} to be less than or equal to ${expected}`);
+                }
+            },
+            toHaveLength: (expected) => {
+                if (!actual || typeof actual.length === 'undefined') {
+                    throw new Error(`Expected ${actual} to have a length property`);
+                }
+                if (actual.length !== expected) {
+                    throw new Error(`Expected length ${expected}, but got ${actual.length}`);
+                }
+            },
+            toThrow: (expectedMessage) => {
+                if (typeof actual !== 'function') {
+                    throw new Error(`Expected a function but got ${typeof actual}`);
+                }
+                try {
+                    actual();
+                    throw new Error(`Expected function to throw, but it didn't`);
+                } catch (error) {
+                    if (expectedMessage && !error.message.includes(expectedMessage)) {
+                        throw new Error(`Expected error message to contain "${expectedMessage}", but got "${error.message}"`);
+                    }
+                }
+            },
+            not: {
+                toContain: (expected) => {
+                    if (typeof actual === 'string' && actual.includes(expected)) {
+                        throw new Error(`Expected "${actual}" not to contain "${expected}"`);
+                    } else if (Array.isArray(actual) && actual.includes(expected)) {
+                        throw new Error(`Expected array not to contain ${expected}`);
+                    }
+                }
+            },
+            toBeGreaterThanOrEqual: (expected) => {
+                if (actual < expected) {
+                    throw new Error(`Expected ${actual} to be greater than or equal to ${expected}`);
                 }
             }
         };
@@ -111,6 +184,23 @@ global.testRunner = new TestRunner();
 global.describe = global.testRunner.describe.bind(global.testRunner);
 global.it = global.testRunner.it.bind(global.testRunner);
 global.expect = global.testRunner.expect.bind(global.testRunner);
+
+// Add beforeEach and afterEach hooks
+global.beforeEach = function(fn) {
+    // Store beforeEach function to be called before each test
+    if (!global._beforeEachHooks) {
+        global._beforeEachHooks = [];
+    }
+    global._beforeEachHooks.push(fn);
+};
+
+global.afterEach = function(fn) {
+    // Store afterEach function to be called after each test
+    if (!global._afterEachHooks) {
+        global._afterEachHooks = [];
+    }
+    global._afterEachHooks.push(fn);
+};
 
 // Run tests if this file is executed directly
 if (require.main === module) {
