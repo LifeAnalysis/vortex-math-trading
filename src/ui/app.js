@@ -230,17 +230,26 @@ async function runBacktest() {
 
         // Render chart with vortex labels
         if (window.renderPriceChartWithVortex) {
-            const seriesData = processedData.dailyData.map(d => ({
-                timestamp: d.timestamp,
-                price: d.price,
-                digitalRoot: d.digitalRoot,
-                date: d.date
-            }));
-            console.log('[app] Rendering chart with points:', seriesData.length);
-            console.log('[app] Sample data points:', seriesData.slice(0, 3));
-            window.renderPriceChartWithVortex(seriesData);
-            const status = document.getElementById('chart-status');
-            if (status) status.textContent = `Chart loaded with ${seriesData.length} candles with vortex labels.`;
+            try {
+                const seriesData = processedData.dailyData.map(d => ({
+                    timestamp: d.timestamp,
+                    price: d.price,
+                    digitalRoot: d.digitalRoot,
+                    date: d.date
+                }));
+                console.log('[app] Rendering chart with points:', seriesData.length);
+                console.log('[app] Sample data points:', seriesData.slice(0, 3));
+                
+                // Handle async chart rendering
+                await window.renderPriceChartWithVortex(seriesData);
+                
+                const status = document.getElementById('chart-status');
+                if (status) status.textContent = `Chart loaded with ${seriesData.length} candles with vortex labels.`;
+            } catch (chartError) {
+                console.error('[app] Chart rendering error:', chartError);
+                const status = document.getElementById('chart-status');
+                if (status) status.textContent = `Chart error: ${chartError.message}`;
+            }
         } else {
             console.error('[app] renderPriceChartWithVortex function not available');
             const status = document.getElementById('chart-status');
@@ -394,7 +403,7 @@ function updatePerformanceMetrics() {
 /**
  * Try to render chart with vortex labels using Lightweight Charts
  */
-function tryRenderChart() {
+async function tryRenderChart() {
     try {
         console.log('[app] tryRenderChart called');
         if (!processedData) {
@@ -419,7 +428,7 @@ function tryRenderChart() {
         }));
         
         console.log('[app] tryRenderChart with data points:', seriesData.length);
-        window.renderPriceChartWithVortex(seriesData);
+        await window.renderPriceChartWithVortex(seriesData);
         const status = document.getElementById('chart-status');
         if (status) status.textContent = `Chart rendered with ${seriesData.length} data points and vortex labels`;
     } catch (err) {
@@ -464,22 +473,47 @@ function updateTradesTable() {
                 <span class="metric-value">${avgHoldingPeriod.toFixed(1)} days</span>
             </div>
         </div>
-        <table class="trades-table">
+        <table class="trades-table" id="trades-table-sortable">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Action</th>
-                    <th>Price</th>
-                    <th>Digital Root</th>
-                    <th>Portfolio</th>
-                    <th>P&L</th>
-                    <th>P&L %</th>
+                    <th class="sortable" data-column="date" data-type="date">
+                        Date <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="action" data-type="string">
+                        Action <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="price" data-type="number">
+                        Price <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="digitalRoot" data-type="number">
+                        Digital Root <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="portfolio" data-type="number">
+                        Portfolio <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="pnl" data-type="number">
+                        P&L <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="pnlPercent" data-type="number">
+                        P&L % <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable" data-column="drawdown" data-type="number">
+                        Drawdown % <span class="sort-indicator">⇅</span>
+                    </th>
                 </tr>
             </thead>
             <tbody>
     `;
     
-    backtestResults.trades.forEach(trade => {
+    // Build a quick lookup map from date -> drawdown for fast access
+    const drawdownByDate = {};
+    if (backtestResults.dailyPortfolio && Array.isArray(backtestResults.dailyPortfolio)) {
+        backtestResults.dailyPortfolio.forEach(d => {
+            if (d.date) drawdownByDate[d.date] = typeof d.drawdown === 'number' ? d.drawdown : 0;
+        });
+    }
+    
+    backtestResults.trades.forEach((trade, index) => {
         // Handle different trade object structures
         const profitLoss = trade.profit !== undefined ? trade.profit : (trade.profitLoss || 0);
         const profitLossPercent = trade.profitPercent !== undefined ? trade.profitPercent : (trade.profitLossPercent || 0);
@@ -490,21 +524,130 @@ function updateTradesTable() {
         // Get portfolio value at this trade (use capital field from trade)
         const portfolioValue = trade.capital || 0;
         
+        // Drawdown at the date of the trade (from equity curve)
+        const ddValue = drawdownByDate[trade.date] ?? null;
+        const ddDisplay = ddValue != null ? `${ddValue.toFixed(2)}%` : '-';
+        const ddClass = ddValue && ddValue > 0 ? 'negative' : '';
+        
         html += `
-            <tr>
-                <td>${trade.date}</td>
-                <td><span class="trade-${trade.action.toLowerCase()}">${trade.action}</span></td>
-                <td>$${trade.price.toFixed(2)}</td>
-                <td>${trade.digitalRoot}</td>
-                <td class="portfolio-value">$${portfolioValue.toLocaleString()}</td>
-                <td class="${pnlClass}">$${profitLoss.toFixed(2)}</td>
-                <td class="${pnlClass}">${pnlPercent}%</td>
-                </tr>
+            <tr data-index="${index}">
+                <td data-value="${trade.date}">${trade.date}</td>
+                <td data-value="${trade.action}"><span class="trade-${trade.action.toLowerCase()}">${trade.action}</span></td>
+                <td data-value="${trade.price}">$${trade.price.toFixed(2)}</td>
+                <td data-value="${trade.digitalRoot}">${trade.digitalRoot}</td>
+                <td data-value="${portfolioValue}" class="portfolio-value">$${portfolioValue.toLocaleString()}</td>
+                <td data-value="${profitLoss}" class="${pnlClass}">$${profitLoss.toFixed(2)}</td>
+                <td data-value="${profitLossPercent}" class="${pnlClass}">${pnlPercent}%</td>
+                <td data-value="${ddValue != null ? ddValue : ''}" class="${ddClass}">${ddDisplay}</td>
+            </tr>
         `;
     });
     
     html += '</tbody></table>';
     tradesContainer.innerHTML = html;
+    
+    // Add sort functionality
+    setupTableSorting();
+}
+
+/**
+ * Setup table sorting functionality
+ */
+function setupTableSorting() {
+    const table = document.getElementById('trades-table-sortable');
+    if (!table) return;
+    
+    const headers = table.querySelectorAll('th.sortable');
+    let currentSort = { column: null, direction: 'asc' };
+    
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.column;
+            const type = header.dataset.type;
+            
+            // Toggle direction if same column, otherwise default to ascending
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.direction = 'asc';
+            }
+            currentSort.column = column;
+            
+            // Update sort indicators
+            headers.forEach(h => {
+                const indicator = h.querySelector('.sort-indicator');
+                if (h === header) {
+                    indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                    h.classList.add('sorted');
+                } else {
+                    indicator.textContent = '⇅';
+                    h.classList.remove('sorted');
+                }
+            });
+            
+            // Sort the table
+            sortTable(table, column, type, currentSort.direction);
+        });
+    });
+}
+
+/**
+ * Sort table by column
+ */
+function sortTable(table, column, type, direction) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    rows.sort((a, b) => {
+        let aVal, bVal;
+        
+        // Get cell based on column index
+        const columnIndex = {
+            'date': 0,
+            'action': 1,
+            'price': 2,
+            'digitalRoot': 3,
+            'portfolio': 4,
+            'pnl': 5,
+            'pnlPercent': 6,
+            'drawdown': 7
+        };
+        
+        const cellIndex = columnIndex[column];
+        const aCells = a.querySelectorAll('td');
+        const bCells = b.querySelectorAll('td');
+        
+        aVal = aCells[cellIndex]?.dataset.value;
+        bVal = bCells[cellIndex]?.dataset.value;
+        
+        // Convert values based on type
+        if (type === 'date') {
+            aVal = new Date(aVal);
+            bVal = new Date(bVal);
+        } else if (type === 'number') {
+            aVal = parseFloat(aVal) || 0;
+            bVal = parseFloat(bVal) || 0;
+        }
+        // string type uses values as-is
+        
+        // Handle null/undefined values
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        
+        let comparison = 0;
+        if (type === 'number' || type === 'date') {
+            comparison = aVal - bVal;
+        } else {
+            comparison = aVal.toString().localeCompare(bVal.toString());
+        }
+        
+        return direction === 'asc' ? comparison : -comparison;
+    });
+    
+    // Clear tbody and append sorted rows
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
 }
 
 /**

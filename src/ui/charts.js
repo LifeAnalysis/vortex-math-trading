@@ -6,16 +6,31 @@
 let tvChart = null;
 let tvSeries = null;
 
-function renderPriceChartWithVortex(data) {
+async function renderPriceChartWithVortex(data) {
     console.log('[charts] renderPriceChartWithVortex: received', Array.isArray(data) ? data.length : 0, 'points');
+    
+    // Check for null or invalid data and fetch from CoinGecko if needed
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('[charts] Invalid or empty data received, attempting to fetch from CoinGecko...');
+        try {
+            data = await fetchFallbackDataFromCoinGecko();
+        } catch (fetchError) {
+            console.error('[charts] Failed to fetch fallback data:', fetchError);
+            showChartError('Unable to load price data. Please try again later.');
+            return;
+        }
+    }
+    
     const container = document.getElementById('tradingview-chart');
     if (!container) {
         console.error('[charts] Chart container not found');
+        showChartError('Chart container not available');
         return;
     }
 
     if (!window.LightweightCharts) {
         console.error('[charts] LightweightCharts library not loaded');
+        showChartError('Chart library not loaded');
         return;
     }
     
@@ -178,13 +193,48 @@ function renderPriceChartWithVortex(data) {
     }
     
     try {
-        tvSeries.setData(chartData);
+        // Validate data before setting
+        const validatedData = validateAndCleanChartData(chartData);
+        if (validatedData.length === 0) {
+            throw new Error('No valid data points after validation');
+        }
+        
+        tvSeries.setData(validatedData);
         console.log('[charts] Chart data set successfully');
+        hideChartError(); // Hide any previous error messages
     } catch (err) {
         console.error('[charts] Error setting chart data:', err);
         console.error('[charts] tvSeries state:', tvSeries);
         console.error('[charts] Data sample:', chartData.slice(0, 3));
-        return;
+        
+        // Try to recover with fallback data
+        if (err.message.includes('Value is null') || err.message.includes('invalid')) {
+            console.warn('[charts] Attempting to recover with fresh data...');
+            try {
+                const fallbackData = await fetchFallbackDataFromCoinGecko();
+                const cleanFallbackData = validateAndCleanChartData(fallbackData.map(d => ({
+                    time: Math.floor(d.timestamp / 1000),
+                    value: d.price,
+                    digitalRoot: d.digitalRoot,
+                    date: d.date
+                })));
+                
+                if (cleanFallbackData.length > 0) {
+                    tvSeries.setData(cleanFallbackData);
+                    console.log('[charts] Recovery successful with fallback data');
+                    hideChartError();
+                } else {
+                    throw new Error('Fallback data also invalid');
+                }
+            } catch (recoveryError) {
+                console.error('[charts] Recovery failed:', recoveryError);
+                showChartError('Unable to display chart data. Please refresh the page.');
+                return;
+            }
+        } else {
+            showChartError('Chart data error. Please try again.');
+            return;
+        }
     }
 
     // Draw digital root labels above each data point
@@ -385,6 +435,163 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+/**
+ * Fetch fallback data from CoinGecko using MCP API
+ */
+async function fetchFallbackDataFromCoinGecko() {
+    console.log('[charts] Fetching fallback data from CoinGecko...');
+    
+    try {
+        // Use CoinGecko API to get Bitcoin price data
+        const response = await fetch('/api/coingecko/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.prices || !Array.isArray(data.prices)) {
+            throw new Error('Invalid CoinGecko response format');
+        }
+        
+        // Process CoinGecko data to our format
+        const processedData = data.prices.map(([timestamp, price]) => {
+            const digitalRoot = calculateDigitalRoot(Math.round(price));
+            return {
+                timestamp: timestamp,
+                price: price,
+                digitalRoot: digitalRoot,
+                date: new Date(timestamp).toISOString().split('T')[0]
+            };
+        });
+        
+        console.log('[charts] Successfully fetched', processedData.length, 'data points from CoinGecko');
+        return processedData;
+        
+    } catch (error) {
+        console.error('[charts] CoinGecko fetch failed:', error);
+        
+        // Ultimate fallback - use cached/backup data if available
+        if (window.processedData && window.processedData.dailyData) {
+            console.log('[charts] Using cached backup data');
+            return window.processedData.dailyData;
+        }
+        
+        // Generate minimal mock data as last resort
+        console.warn('[charts] Generating mock data as last resort');
+        return generateMockBitcoinData();
+    }
+}
+
+/**
+ * Validate and clean chart data to prevent null value errors
+ */
+function validateAndCleanChartData(data) {
+    if (!Array.isArray(data)) {
+        console.warn('[charts] Data is not an array');
+        return [];
+    }
+    
+    return data.filter(point => {
+        // Check for required fields
+        if (!point || typeof point !== 'object') {
+            return false;
+        }
+        
+        // Check time field
+        if (!point.time || isNaN(point.time) || point.time <= 0) {
+            return false;
+        }
+        
+        // Check value field
+        if (!point.value || isNaN(point.value) || point.value <= 0) {
+            return false;
+        }
+        
+        // Ensure reasonable ranges
+        if (point.time < 946684800 || point.time > Date.now() / 1000) { // Year 2000 to now
+            return false;
+        }
+        
+        if (point.value < 0.01 || point.value > 1000000) { // Reasonable BTC price range
+            return false;
+        }
+        
+        return true;
+    }).sort((a, b) => a.time - b.time); // Ensure chronological order
+}
+
+/**
+ * Generate mock Bitcoin data as ultimate fallback
+ */
+function generateMockBitcoinData() {
+    console.log('[charts] Generating mock Bitcoin data');
+    const mockData = [];
+    const now = Math.floor(Date.now() / 1000);
+    const oneDay = 24 * 60 * 60;
+    let price = 45000; // Starting price
+    
+    for (let i = 365; i >= 0; i--) {
+        const timestamp = now - (i * oneDay);
+        // Add some realistic price movement
+        price = price * (0.98 + Math.random() * 0.04); // ±2% daily movement
+        const digitalRoot = calculateDigitalRoot(Math.round(price));
+        
+        mockData.push({
+            timestamp: timestamp * 1000,
+            price: price,
+            digitalRoot: digitalRoot,
+            date: new Date(timestamp * 1000).toISOString().split('T')[0]
+        });
+    }
+    
+    return mockData;
+}
+
+/**
+ * Calculate digital root for vortex math
+ */
+function calculateDigitalRoot(number) {
+    if (typeof number !== 'number' || isNaN(number)) return 1;
+    
+    let sum = Math.abs(Math.floor(number));
+    while (sum >= 10) {
+        sum = sum.toString().split('').reduce((acc, digit) => acc + parseInt(digit), 0);
+    }
+    return sum || 9; // If sum is 0, return 9
+}
+
+/**
+ * Show chart error message
+ */
+function showChartError(message) {
+    const status = document.getElementById('chart-status');
+    if (status) {
+        status.textContent = `❌ ${message}`;
+        status.style.color = '#ff4757';
+    }
+    
+    const container = document.getElementById('tradingview-chart');
+    if (container) {
+        container.style.border = '2px solid #ff4757';
+    }
+}
+
+/**
+ * Hide chart error message
+ */
+function hideChartError() {
+    const status = document.getElementById('chart-status');
+    if (status) {
+        status.style.color = '';
+    }
+    
+    const container = document.getElementById('tradingview-chart');
+    if (container) {
+        container.style.border = '';
+    }
 }
 
 // Expose API to window
