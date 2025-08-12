@@ -1,0 +1,44 @@
+{
+  "name": "vortex-math-trading-system",
+  "version": "1.0.0",
+  "description": "A research tool for exploring vortex mathematics principles in cryptocurrency trading analysis",
+  "main": "src/core/index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "serve": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "vortex-math",
+    "trading",
+    "cryptocurrency",
+    "backtesting",
+    "modular-arithmetic",
+    "digital-root"
+  ],
+  "author": "Vortex Research Team",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  }
+}
