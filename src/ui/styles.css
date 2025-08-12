@@ -159,8 +159,9 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-    max-height: calc(100vh - 8rem);
+    min-height: calc(100vh - 8rem);
     overflow-y: auto;
+    overflow-x: visible;
 }
 
 /* ============================================
@@ -540,12 +541,16 @@ header h1 {
 .tab-panel {
     display: none;
     flex: 1;
+    min-height: 600px;
+    overflow: visible;
 }
 
 .tab-panel.active {
     display: flex;
     flex-direction: column;
     animation: fadeIn 0.3s ease;
+    min-height: 600px;
+    overflow: visible;
 }
 
 @keyframes fadeIn {
@@ -565,6 +570,8 @@ header h1 {
     border: 1px solid rgba(0, 255, 136, 0.15);
     box-shadow: var(--shadow-sm);
     flex: 1;
+    min-height: 550px;
+    overflow: visible;
 }
 
 #tradingview-chart {
@@ -573,7 +580,9 @@ header h1 {
     background: #000;
     border: 1px solid rgba(0, 255, 136, 0.1);
     position: relative;
-    height: 400px;
+    height: 500px !important;
+    width: 100% !important;
+    min-height: 500px;
 }
 
 .vortex-label {
@@ -652,6 +661,39 @@ header h1 {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+}
+
+.trades-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.trades-table th.sortable:hover {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--primary-green-light);
+}
+
+.trades-table th.sortable.sorted {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--primary-green-light);
+}
+
+.sort-indicator {
+    margin-left: 5px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.trades-table th.sortable:hover .sort-indicator {
+    opacity: 1;
+}
+
+.trades-table th.sortable.sorted .sort-indicator {
+    opacity: 1;
+    font-weight: bold;
 }
 
 .trades-table td {

@@ -39,7 +39,7 @@ function renderPriceChartWithVortex(data) {
     try {
         tvChart = LightweightCharts.createChart(container, {
             width: container.clientWidth || 800,
-            height: container.clientHeight || 400,
+            height: 500, // Fixed height to match CSS
             autoSize: true,
             layout: {
                 background: { type: 'solid', color: '#000000' },
