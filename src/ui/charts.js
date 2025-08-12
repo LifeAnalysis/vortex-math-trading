@@ -232,66 +232,75 @@ function drawVortexLabels(container, chart, dataPoints) {
                 }
             };
 
-            // Sample data points more intelligently based on zoom level
-            const visibleRange = timeScale.getVisibleLogicalRange();
-            const totalPoints = dataPoints.length;
-            const visiblePoints = visibleRange ? (visibleRange.to - visibleRange.from) : totalPoints;
-            const sampleRate = Math.max(1, Math.floor(visiblePoints / 20)); // Show max 20 labels
+            // Only show buy (1) and sell (5) signals for cleaner visualization
+            const buySignals = dataPoints.filter(point => point.digitalRoot === 1);
+            const sellSignals = dataPoints.filter(point => point.digitalRoot === 5);
             
-            const sampledData = dataPoints.filter((_, index) => index % sampleRate === 0);
-            
-            sampledData.forEach(point => {
+            // Draw buy signals (1) as green circles with numbers
+            buySignals.forEach(point => {
                 const { x, y } = coordinateToScreen(point.time, point.high || point.close);
                 if (x == null || y == null) return;
 
                 const label = document.createElement('div');
-                label.className = 'vortex-label';
-                label.textContent = String(point.digitalRoot ?? '');
+                label.className = 'vortex-label buy-signal';
+                label.textContent = '1';
                 label.style.position = 'absolute';
                 label.style.left = `${Math.round(x)}px`;
-                label.style.top = `${Math.round(y - 35)}px`; // Position above candle
+                label.style.top = `${Math.round(y - 35)}px`;
                 label.style.transform = 'translate(-50%, -100%)';
-                label.style.padding = '3px 6px';
-                label.style.fontSize = '11px';
+                label.style.padding = '4px 8px';
+                label.style.fontSize = '12px';
                 label.style.fontWeight = 'bold';
-                label.style.borderRadius = '3px';
+                label.style.borderRadius = '50%'; // Make it circular
                 label.style.pointerEvents = 'none';
-                label.style.background = '#ffffff';
-                label.style.color = '#333';
-                label.style.border = '1px solid #333';
-                label.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+                label.style.background = '#28a745';
+                label.style.color = '#fff';
+                label.style.border = '2px solid #1e7e34';
+                label.style.boxShadow = '0 2px 6px rgba(40, 167, 69, 0.4)';
                 label.style.zIndex = '1000';
-                label.style.minWidth = '16px';
+                label.style.minWidth = '20px';
+                label.style.height = '20px';
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.justifyContent = 'center';
                 label.style.textAlign = 'center';
 
-                // Color-code by vortex significance with cleaner design
-                if (point.digitalRoot === 1) {
-                    label.style.background = '#28a745'; // Green for cycle start
-                    label.style.color = '#fff';
-                    label.style.borderColor = '#1e7e34';
-                } else if (point.digitalRoot === 5) {
-                    label.style.background = '#dc3545'; // Red for cycle peak
-                    label.style.color = '#fff';
-                    label.style.borderColor = '#c82333';
-                } else if (point.digitalRoot === 9) {
-                    label.style.background = '#ffc107'; // Yellow for balance
-                    label.style.color = '#212529';
-                    label.style.borderColor = '#e0a800';
-                } else if (point.digitalRoot === 3 || point.digitalRoot === 6) {
-                    label.style.background = '#6f42c1'; // Purple for Tesla numbers
-                    label.style.color = '#fff';
-                    label.style.borderColor = '#59359a';
-                } else {
-                    // Default styling for other numbers
-                    label.style.background = '#f8f9fa';
-                    label.style.color = '#495057';
-                    label.style.borderColor = '#dee2e6';
-                }
+                container.appendChild(label);
+            });
+
+            // Draw sell signals (5) as red circles with numbers
+            sellSignals.forEach(point => {
+                const { x, y } = coordinateToScreen(point.time, point.high || point.close);
+                if (x == null || y == null) return;
+
+                const label = document.createElement('div');
+                label.className = 'vortex-label sell-signal';
+                label.textContent = '5';
+                label.style.position = 'absolute';
+                label.style.left = `${Math.round(x)}px`;
+                label.style.top = `${Math.round(y - 35)}px`;
+                label.style.transform = 'translate(-50%, -100%)';
+                label.style.padding = '4px 8px';
+                label.style.fontSize = '12px';
+                label.style.fontWeight = 'bold';
+                label.style.borderRadius = '50%'; // Make it circular
+                label.style.pointerEvents = 'none';
+                label.style.background = '#dc3545';
+                label.style.color = '#fff';
+                label.style.border = '2px solid #c82333';
+                label.style.boxShadow = '0 2px 6px rgba(220, 53, 69, 0.4)';
+                label.style.zIndex = '1000';
+                label.style.minWidth = '20px';
+                label.style.height = '20px';
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.justifyContent = 'center';
+                label.style.textAlign = 'center';
 
                 container.appendChild(label);
             });
             
-            console.log(`[charts] Drew ${sampledData.length} vortex labels (sample rate: ${sampleRate})`);
+            console.log(`[charts] Drew ${buySignals.length} buy signals and ${sellSignals.length} sell signals`);
         };
 
         // Initial label drawing

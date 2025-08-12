@@ -219,6 +219,9 @@ async function runBacktest() {
         console.log('[app] Backtest results structure:', Object.keys(backtestResults));
         console.log('[app] Performance data:', backtestResults.performance);
 
+        // Calculate buy and hold comparison
+        calculateBuyAndHoldComparison();
+        
         updatePerformanceMetrics();
         showResults();
 
@@ -295,6 +298,28 @@ function calculateBacktestPerformance(signals, initialCapital) {
 }
 
 /**
+ * Calculate buy and hold strategy comparison
+ */
+function calculateBuyAndHoldComparison() {
+    if (!processedData || !backtestResults) return;
+    
+    const firstPrice = processedData.dailyData[0].price;
+    const lastPrice = processedData.dailyData[processedData.dailyData.length - 1].price;
+    
+    const buyAndHoldReturn = ((lastPrice - firstPrice) / firstPrice) * 100;
+    const buyAndHoldFinalCapital = appState.config.initialCapital * (lastPrice / firstPrice);
+    
+    backtestResults.buyAndHold = {
+        return: buyAndHoldReturn,
+        finalCapital: buyAndHoldFinalCapital,
+        startPrice: firstPrice,
+        endPrice: lastPrice
+    };
+    
+    console.log('[app] Buy and hold comparison:', backtestResults.buyAndHold);
+}
+
+/**
  * Update performance metrics in the UI
  */
 function updatePerformanceMetrics() {
@@ -307,6 +332,35 @@ function updatePerformanceMetrics() {
     document.getElementById('max-drawdown').textContent = `${backtestResults.performance.maxDrawdown.toFixed(2)}%`;
     document.getElementById('sharpe-ratio').textContent = backtestResults.performance.sharpeRatio.toFixed(2);
     document.getElementById('final-capital').textContent = `$${backtestResults.finalCapital.toLocaleString()}`;
+    
+    // Update buy and hold comparison if available
+    if (backtestResults.buyAndHold) {
+        document.getElementById('buy-hold-return').textContent = `${backtestResults.buyAndHold.return.toFixed(2)}%`;
+        document.getElementById('buy-hold-capital').textContent = `$${backtestResults.buyAndHold.finalCapital.toLocaleString()}`;
+        
+        const outperformance = backtestResults.totalReturn - backtestResults.buyAndHold.return;
+        const outperformanceElement = document.getElementById('strategy-outperformance');
+        outperformanceElement.textContent = `${outperformance >= 0 ? '+' : ''}${outperformance.toFixed(2)}%`;
+        
+        // Color code the outperformance
+        if (outperformance >= 0) {
+            outperformanceElement.classList.add('positive');
+            outperformanceElement.classList.remove('negative');
+        } else {
+            outperformanceElement.classList.add('negative');
+            outperformanceElement.classList.remove('positive');
+        }
+        
+        // Color code buy and hold return
+        const buyHoldElement = document.getElementById('buy-hold-return');
+        if (backtestResults.buyAndHold.return >= 0) {
+            buyHoldElement.classList.add('positive');
+            buyHoldElement.classList.remove('negative');
+        } else {
+            buyHoldElement.classList.add('negative');
+            buyHoldElement.classList.remove('positive');
+        }
+    }
     
     // Update return color
     const totalReturnElement = document.getElementById('total-return');
