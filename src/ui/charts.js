@@ -191,26 +191,13 @@ function renderPriceChartWithVortex(data) {
             console.log('[charts] About to set data on series:', tvSeries);
             console.log('[charts] Data format check - first 3 items:', chartData.slice(0, 3));
             
-            // First test with minimal known-good data to verify series works
-            const testData = [
-                { time: 1577836800, value: 7000 },
-                { time: 1577923200, value: 7200 },
-                { time: 1578009600, value: 6985 }
-            ];
-            
-            console.log('[charts] Testing with minimal data first:', testData);
-            tvSeries.setData(testData);
-            
-            // Prepare minimal data for series (time/value only)
+            // Prepare minimal data for series (time/value only) and set immediately
             const seriesData = chartData.map(p => ({ time: p.time, value: p.value }));
-
-            // Wait a moment then set real data
-            setTimeout(() => {
-                console.log('[charts] Now setting real chart data...');
-                tvSeries.setData(seriesData);
-                console.log('[charts] Real data set on series');
-                try { tvSeries.applyOptions({ visible: true, color: '#87CEEB', lineColor: '#87CEEB', lineWidth: 3 }); } catch {}
-            }, 100);
+            console.log('[charts] Setting series data (time,value) points:', seriesData.length);
+            tvSeries.setData(seriesData);
+            try { tvSeries.applyOptions({ visible: true, color: '#87CEEB', lineColor: '#87CEEB', lineWidth: 3 }); } catch {}
+            // Ensure full range is visible asap
+            try { tvChart.timeScale().fitContent(); } catch {}
             console.log('[charts] Chart data set successfully on series');
             console.log('[charts] Chart data range - first:', chartData[0]);
             console.log('[charts] Chart data range - last:', chartData[chartData.length - 1]);
@@ -245,8 +232,8 @@ function renderPriceChartWithVortex(data) {
             return;
         }
 
-    // Draw digital root labels above each data point
-    drawVortexLabels(container, tvChart, chartData);
+    // Draw digital root labels above each data point after first paint to avoid blocking render
+    requestAnimationFrame(() => drawVortexLabels(container, tvChart, chartData));
     
     // Add trade signals if available
     addTradeSignals(tvChart, tvSeries, chartData);
