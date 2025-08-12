@@ -205,33 +205,11 @@ function renderPriceChartWithVortex(data) {
     // Add trade signals if available
     addTradeSignals(tvChart, tvSeries, chartData);
     
-    // Handle window resize for responsiveness
-    const handleResize = () => {
-        try {
-            if (tvChart && container && container.clientWidth > 0 && container.clientHeight > 0) {
-                const newWidth = container.clientWidth;
-                const newHeight = container.clientHeight || 500;
-                
-                if (newWidth > 0 && newHeight > 0) {
-                    tvChart.applyOptions({
-                        width: newWidth,
-                        height: newHeight
-                    });
-                }
-            }
-        } catch (err) {
-            console.warn('[charts] Resize handler error:', err);
-        }
-    };
-    
-    // Add resize listener
-    window.addEventListener('resize', handleResize);
-    
-    // Store cleanup function for resize listener
+    // Store cleanup function for labels only (removed problematic resize handler)
     const existingCleanup = container._cleanupLabels;
     container._cleanupLabels = () => {
         if (existingCleanup) existingCleanup();
-        window.removeEventListener('resize', handleResize);
+        // No resize listener to remove since we're using autoSize: true
     };
 }
 
