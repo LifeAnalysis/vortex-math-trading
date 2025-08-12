@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vortex Trading Backtester</title>
     <link rel="stylesheet" href="/src/ui/styles.css">
+    <!-- TradingView Lightweight Charts -->
+    <script src="/public/libs/lightweight-charts.standalone.development.js"></script>
 </head>
 <body>
     <div class="container">
@@ -111,7 +113,8 @@
                 <div class="tab-content">
                     <div id="chart-tab" class="tab-panel active">
                         <div id="price-chart-container">
-                            <canvas id="price-chart" width="100%" height="400"></canvas>
+                            <!-- TradingView Chart Container -->
+                            <div id="tradingview-chart" style="height: 500px; width: 100%;"></div>
                             <div id="chart-status">Chart will display after running backtest</div>
                         </div>
                         
@@ -151,7 +154,8 @@
     <script src="/src/core/vortex-math.js"></script>
     <script src="/src/data/coingecko-api.js"></script>
     <script src="/src/data/data-processor.js"></script>
+    <script src="/src/data/tradingview-data.js"></script>
     <script src="/src/strategies/vortex-strategy.js"></script>
-    <script src="/src/ui/app.js"></script>
+    <script src="/src/ui/tradingview-app.js"></script>
 </body>
 </html>

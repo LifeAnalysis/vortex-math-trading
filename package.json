@@ -8,9 +8,21 @@
     "test": "node tests/run-tests.js",
     "start": "npm run dev"
   },
-  "keywords": ["vortex", "math", "trading", "backtesting", "cryptocurrency"],
+  "keywords": [
+    "vortex",
+    "math",
+    "trading",
+    "backtesting",
+    "cryptocurrency"
+  ],
   "author": "Vortex Math Trading System",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {}
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "lightweight-charts": "^5.0.8"
+  }
 }
