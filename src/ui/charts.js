@@ -82,17 +82,17 @@ function renderPriceChartWithVortex(data) {
         try {
             // TradingView Lightweight Charts v5 API - use addSeries with series type
             console.log('[charts] Creating line series using v5 API');
+            console.log('[charts] Available series types:', Object.keys(LightweightCharts));
             
             tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
                 color: '#87CEEB',
                 lineWidth: 3,
-                lineStyle: LightweightCharts.LineStyle.Solid,
-                lineType: LightweightCharts.LineType.Simple,
                 priceLineVisible: true,
                 lastValueVisible: true
             });
             
-            console.log('[charts] Line series created successfully');
+            console.log('[charts] Line series created successfully:', tvSeries);
+            console.log('[charts] Series methods:', Object.getOwnPropertyNames(tvSeries));
             
         } catch (lineError) {
             console.error('[charts] Line series failed, trying area series:', lineError);
@@ -153,12 +153,21 @@ function renderPriceChartWithVortex(data) {
     }
 
     // Map data to format compatible with different series types
-    const chartData = data.map(d => ({
-        time: Math.floor(d.timestamp / 1000),
-        value: d.price,
-        digitalRoot: d.digitalRoot,
-        date: d.date
-    })).filter(d => d.time && d.value && !isNaN(d.value));
+    // Try both timestamp and date string formats for maximum compatibility
+    const chartData = data.map(d => {
+        const timestampSeconds = Math.floor(d.timestamp / 1000);
+        const dateString = d.date || new Date(d.timestamp).toISOString().split('T')[0];
+        
+        return {
+            time: timestampSeconds, // Unix timestamp in seconds
+            value: d.price,
+            digitalRoot: d.digitalRoot,
+            date: dateString
+        };
+    }).filter(d => d.time && d.value && !isNaN(d.value) && d.time > 0);
+    
+    console.log('[charts] Raw data sample:', data.slice(0, 2));
+    console.log('[charts] Processed chart data sample:', chartData.slice(0, 2));
 
     console.log('[charts] setting chart data', chartData.length);
     console.log('[charts] sample chart data:', chartData.slice(0, 3));
@@ -174,23 +183,51 @@ function renderPriceChartWithVortex(data) {
     }
     
             try {
-            tvSeries.setData(chartData);
-            console.log('[charts] Chart data set successfully');
+            console.log('[charts] About to set data on series:', tvSeries);
+            console.log('[charts] Data format check - first 3 items:', chartData.slice(0, 3));
+            
+            // First test with minimal known-good data to verify series works
+            const testData = [
+                { time: 1577836800, value: 7000 },
+                { time: 1577923200, value: 7200 },
+                { time: 1578009600, value: 6985 }
+            ];
+            
+            console.log('[charts] Testing with minimal data first:', testData);
+            tvSeries.setData(testData);
+            
+            // Wait a moment then set real data
+            setTimeout(() => {
+                console.log('[charts] Now setting real chart data...');
+                tvSeries.setData(chartData);
+                console.log('[charts] Real data set on series');
+            }, 100);
+            console.log('[charts] Chart data set successfully on series');
             console.log('[charts] Chart data range - first:', chartData[0]);
             console.log('[charts] Chart data range - last:', chartData[chartData.length - 1]);
             console.log('[charts] Price range - min:', Math.min(...chartData.map(d => d.value)));
             console.log('[charts] Price range - max:', Math.max(...chartData.map(d => d.value)));
             
-            // Fit the chart to the data range
-            tvChart.timeScale().fitContent();
-            
-            // Force a repaint to ensure visibility
+            // Verify data was actually set
             setTimeout(() => {
                 if (tvChart && tvSeries) {
-                    console.log('[charts] Forcing chart repaint for visibility');
+                    console.log('[charts] Checking if data is visible on series...');
+                    const visibleRange = tvChart.timeScale().getVisibleRange();
+                    console.log('[charts] Visible time range:', visibleRange);
+                    
+                    // Force chart to show the data
                     tvChart.timeScale().fitContent();
+                    console.log('[charts] Chart fitted to content');
+                    
+                    // Check series visibility
+                    try {
+                        const seriesOptions = tvSeries.options();
+                        console.log('[charts] Series options after data set:', seriesOptions);
+                    } catch (e) {
+                        console.log('[charts] Could not get series options:', e);
+                    }
                 }
-            }, 100);
+            }, 200);
             
         } catch (err) {
             console.error('[charts] Error setting chart data:', err);
