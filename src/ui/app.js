@@ -219,6 +219,8 @@ async function runBacktest() {
         console.log('[app] Running strategy on', processedData.dailyData.length, 'daily points');
         backtestResults = strategy.backtest(processedData.dailyData, appState.config.initialCapital);
         console.log('[app] Backtest done. Final capital:', backtestResults.finalCapital);
+        console.log('[app] Backtest results structure:', Object.keys(backtestResults));
+        console.log('[app] Performance data:', backtestResults.performance);
 
         updatePerformanceMetrics();
         showResults();
