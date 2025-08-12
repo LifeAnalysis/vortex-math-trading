@@ -24,14 +24,26 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Creating new chart');
         try {
             tvChart = LightweightCharts.createChart(container, {
-                layout: { background: { color: '#ffffff' }, textColor: '#333' },
-                grid: { vertLines: { color: '#eee' }, horzLines: { color: '#eee' } },
+                layout: { 
+                    background: { type: 'solid', color: '#ffffff' }, 
+                    textColor: '#333' 
+                },
+                grid: { 
+                    vertLines: { color: '#eee' }, 
+                    horzLines: { color: '#eee' } 
+                },
                 rightPriceScale: { borderVisible: false },
                 timeScale: { borderVisible: false },
                 autoSize: true,
-                crosshair: { mode: 0 },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
             });
-            tvSeries = tvChart.addCandlestickSeries();
+            tvSeries = tvChart.addCandlestickSeries({
+                upColor: '#26a69a',
+                downColor: '#ef5350',
+                borderVisible: false,
+                wickUpColor: '#26a69a',
+                wickDownColor: '#ef5350'
+            });
             console.log('[charts] Chart created successfully');
         } catch (err) {
             console.error('[charts] Error creating chart:', err);
@@ -76,45 +88,56 @@ function drawVortexLabels(container, chart, candles) {
     old.forEach(el => el.remove());
 
     const timeScale = chart.timeScale();
-    const priceScale = chart.priceScale('right');
+    
+    try {
+        // Get the candlestick series from chart
+        const series = tvSeries;
+        if (!series) {
+            console.error('[charts] No series available for coordinate conversion');
+            return;
+        }
 
-    const seriesPriceScale = chart.serieses()[0].priceScale();
+        const coordinateToScreen = (time, price) => {
+            try {
+                const x = timeScale.timeToCoordinate(time);
+                const y = series.priceToCoordinate(price);
+                return { x, y };
+            } catch (err) {
+                console.warn('[charts] Coordinate conversion failed:', err);
+                return { x: null, y: null };
+            }
+        };
 
-    const coordinateToScreen = (time, price) => {
-        const x = timeScale.timeToCoordinate(time);
-        const y = seriesPriceScale.priceToCoordinate(price);
-        return { x, y };
-    };
+        candles.forEach(c => {
+            const { x, y } = coordinateToScreen(c.time, c.close);
+            if (x == null || y == null) return;
 
-    const rect = container.getBoundingClientRect();
+            const label = document.createElement('div');
+            label.className = 'vortex-label';
+            label.textContent = String(c.digitalRoot ?? '');
+            label.style.position = 'absolute';
+            label.style.left = `${Math.round(x)}px`;
+            label.style.top = `${Math.round(y - 22)}px`;
+            label.style.transform = 'translate(-50%, -100%)';
+            label.style.padding = '2px 4px';
+            label.style.fontSize = '10px';
+            label.style.borderRadius = '3px';
+            label.style.pointerEvents = 'none';
+            label.style.background = '#ffffffcc';
+            label.style.color = '#111';
+            label.style.border = '1px solid #ddd';
 
-    candles.forEach(c => {
-        const { x, y } = coordinateToScreen(c.time, c.close);
-        if (x == null || y == null) return;
+            // Color hint by vortex roles
+            if (c.digitalRoot === 1) label.style.background = '#d4edda';
+            if (c.digitalRoot === 5) label.style.background = '#f8d7da';
+            if (c.digitalRoot === 9) label.style.background = '#fff3cd';
+            if (c.digitalRoot === 3 || c.digitalRoot === 6) label.style.background = '#e2e3ff';
 
-        const label = document.createElement('div');
-        label.className = 'vortex-label';
-        label.textContent = String(c.digitalRoot ?? '');
-        label.style.position = 'absolute';
-        label.style.left = `${Math.round(x)}px`;
-        label.style.top = `${Math.round(y - 22)}px`;
-        label.style.transform = 'translate(-50%, -100%)';
-        label.style.padding = '2px 4px';
-        label.style.fontSize = '10px';
-        label.style.borderRadius = '3px';
-        label.style.pointerEvents = 'none';
-        label.style.background = '#ffffffcc';
-        label.style.color = '#111';
-        label.style.border = '1px solid #ddd';
-
-        // Color hint by vortex roles
-        if (c.digitalRoot === 1) label.style.background = '#d4edda';
-        if (c.digitalRoot === 5) label.style.background = '#f8d7da';
-        if (c.digitalRoot === 9) label.style.background = '#fff3cd';
-        if (c.digitalRoot === 3 || c.digitalRoot === 6) label.style.background = '#e2e3ff';
-
-        container.appendChild(label);
-    });
+            container.appendChild(label);
+        });
+    } catch (err) {
+        console.error('[charts] Error in drawVortexLabels:', err);
+    }
 }
 
 // Expose API to window
