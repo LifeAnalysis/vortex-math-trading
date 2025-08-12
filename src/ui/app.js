@@ -99,8 +99,8 @@ function updateConfigFromForm() {
         sellSignal: parseInt(document.getElementById('sell-signal')?.value || 5),
         holdSignal: parseInt(document.getElementById('hold-signal')?.value || 9),
         initialCapital: parseInt(document.getElementById('initial-capital')?.value || 10000),
-        startDate: document.getElementById('start-date')?.value || '2020-01-01',
-        endDate: document.getElementById('end-date')?.value || '2023-12-31',
+        startDate: document.getElementById('start-date')?.value || '2018-01-01',
+        endDate: document.getElementById('end-date')?.value || '2025-08-12',
         teslaFilter: document.getElementById('tesla-filter')?.checked || false,
         sequenceFilter: document.getElementById('sequence-filter')?.checked || false,
         positionSize: parseFloat(document.getElementById('position-size')?.value || 1.0),
@@ -117,8 +117,8 @@ function resetConfig() {
     document.getElementById('sell-signal').value = 5;
     document.getElementById('hold-signal').value = 9;
     document.getElementById('initial-capital').value = 10000;
-    document.getElementById('start-date').value = '2020-01-01';
-    document.getElementById('end-date').value = '2023-12-31';
+    document.getElementById('start-date').value = '2018-01-01';
+    document.getElementById('end-date').value = '2025-08-12';
     document.getElementById('tesla-filter').checked = true;
     document.getElementById('sequence-filter').checked = true;
     document.getElementById('position-size').value = 1.0;
@@ -179,6 +179,9 @@ async function loadHistoricalData() {
         );
         console.log('[app] Total return since 2018:', (((prices[prices.length-1] - prices[0]) / prices[0]) * 100).toFixed(2) + '%');
         showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records (${raw.metadata.period})`, 'success');
+        
+        // Set dynamic date ranges based on actual data
+        updateDateInputLimits(processedData.dailyData);
     } catch (error) {
         console.error('Error loading historical data:', error);
         showNotification('Error loading data. Please check console for details.', 'error');
@@ -447,6 +450,32 @@ async function tryRenderChart() {
         console.error('Chart render error:', err);
         const status = document.getElementById('chart-status');
         if (status) status.textContent = `Chart error: ${err.message}`;
+    }
+}
+
+/**
+ * Update date input limits based on actual data availability
+ * @param {Array} dailyData - The processed daily data array
+ */
+function updateDateInputLimits(dailyData) {
+    if (!dailyData || dailyData.length === 0) return;
+    
+    const firstDate = new Date(dailyData[0].timestamp).toISOString().split('T')[0];
+    const lastDate = new Date(dailyData[dailyData.length - 1].timestamp).toISOString().split('T')[0];
+    
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+    
+    if (startDateInput) {
+        startDateInput.min = firstDate;
+        startDateInput.max = lastDate;
+        console.log('[app] Set start date limits:', firstDate, 'to', lastDate);
+    }
+    
+    if (endDateInput) {
+        endDateInput.min = firstDate;
+        endDateInput.max = lastDate;
+        console.log('[app] Set end date limits:', firstDate, 'to', lastDate);
     }
 }
 
