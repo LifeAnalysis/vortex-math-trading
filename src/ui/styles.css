@@ -585,6 +585,17 @@ header h1 {
     min-height: 500px;
 }
 
+/* Ensure canvas paints over overlays */
+#tradingview-chart canvas {
+    position: relative;
+    z-index: 10;
+}
+
+/* Make sure vortex labels never cover crosshair/line rendering */
+.vortex-label {
+    z-index: 5 !important;
+}
+
 .vortex-label {
     position: absolute !important;
     z-index: 1000 !important;

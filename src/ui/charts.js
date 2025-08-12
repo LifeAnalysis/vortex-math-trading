@@ -40,7 +40,6 @@ function renderPriceChartWithVortex(data) {
         tvChart = LightweightCharts.createChart(container, {
             width: container.clientWidth || 800,
             height: 500, // Fixed height to match CSS
-            autoSize: true,
             layout: {
                 background: { type: 'solid', color: '#000000' },
                 textColor: '#e0e0e0',
@@ -85,11 +84,16 @@ function renderPriceChartWithVortex(data) {
             console.log('[charts] Available series types:', Object.keys(LightweightCharts));
             
             tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
-                color: '#87CEEB',
+                color: '#87CEEB', // v4 option name
+                lineColor: '#87CEEB', // v5 option name
                 lineWidth: 3,
                 priceLineVisible: true,
-                lastValueVisible: true
+                lastValueVisible: true,
+                visible: true
             });
+
+            // Ensure options are applied regardless of version differences
+            try { tvSeries.applyOptions({ color: '#87CEEB', lineColor: '#87CEEB', lineWidth: 3, visible: true, priceLineVisible: true, lastValueVisible: true }); } catch {}
             
             console.log('[charts] Line series created successfully:', tvSeries);
             console.log('[charts] Series methods:', Object.getOwnPropertyNames(tvSeries));
@@ -105,7 +109,8 @@ function renderPriceChartWithVortex(data) {
                     bottomColor: 'rgba(135, 206, 235, 0.0)',
                     lineWidth: 3,
                     priceLineVisible: true,
-                    lastValueVisible: true
+                    lastValueVisible: true,
+                    visible: true
                 });
                 
                 console.log('[charts] Area series created as fallback');
