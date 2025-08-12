@@ -1,6 +1,6 @@
 /**
- * Vortex Math Trading System - Styles
- * Modern, clean interface for exploring mathematical patterns
+ * Vortex Trading Backtester - Streamlined Interface
+ * Clean, focused design for backtesting workflows
  */
 
 /* CSS Reset and Base Styles */
@@ -19,14 +19,14 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin-top: 15px;
+    margin-bottom: 15px;
 }
 
 /* Header Styles */

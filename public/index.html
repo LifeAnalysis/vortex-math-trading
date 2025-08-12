@@ -3,131 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vortex Math Trading System</title>
+    <title>Vortex Trading Backtester</title>
     <link rel="stylesheet" href="/src/ui/styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌀 Vortex Math Trading System</h1>
-            <p class="subtitle">Exploring Numerical Patterns in Cryptocurrency Markets</p>
-            <div class="disclaimer">
-                ⚠️ <strong>Educational Research Tool</strong> - Vortex mathematics lacks scientific validation
-            </div>
+            <h1>🌀 Vortex Trading Backtester</h1>
+            <p class="subtitle">Mathematical Pattern Backtesting Tool</p>
         </header>
 
         <main>
-            <section class="controls-section">
-                <h2>Configuration</h2>
-                <div class="control-group">
-                    <label for="asset-select">Cryptocurrency:</label>
-                    <select id="asset-select">
-                        <option value="bitcoin">Bitcoin (BTC)</option>
-                        <option value="ethereum">Ethereum (ETH)</option>
-                    </select>
+            <!-- Backtesting Configuration -->
+            <section class="config-section">
+                <h2>📊 Backtest Configuration</h2>
+                <div class="config-grid">
+                    <div class="config-group">
+                        <label for="buy-signal">Buy Signal (Digital Root):</label>
+                        <select id="buy-signal">
+                            <option value="1" selected>1 - Start</option>
+                            <option value="2">2 - Growth</option>
+                            <option value="3">3 - Tesla Positive</option>
+                            <option value="4">4 - Structure</option>
+                            <option value="5">5 - Peak</option>
+                            <option value="6">6 - Tesla Negative</option>
+                            <option value="7">7 - Decline</option>
+                            <option value="8">8 - Power</option>
+                            <option value="9">9 - Balance</option>
+                        </select>
+                    </div>
+                    
+                    <div class="config-group">
+                        <label for="sell-signal">Sell Signal (Digital Root):</label>
+                        <select id="sell-signal">
+                            <option value="1">1 - Start</option>
+                            <option value="2">2 - Growth</option>
+                            <option value="3">3 - Tesla Positive</option>
+                            <option value="4">4 - Structure</option>
+                            <option value="5" selected>5 - Peak</option>
+                            <option value="6">6 - Tesla Negative</option>
+                            <option value="7">7 - Decline</option>
+                            <option value="8">8 - Power</option>
+                            <option value="9">9 - Balance</option>
+                        </select>
+                    </div>
+                    
+                    <div class="config-group">
+                        <label for="initial-capital">Initial Capital ($):</label>
+                        <input type="number" id="initial-capital" value="10000" min="1000" max="1000000" step="1000">
+                    </div>
+                    
+                    <div class="config-group">
+                        <label for="date-range">Test Period:</label>
+                        <div class="date-inputs">
+                            <input type="date" id="start-date" value="2020-01-01">
+                            <input type="date" id="end-date" value="2023-12-31">
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="control-group">
-                    <label for="date-range">Date Range:</label>
-                    <input type="date" id="start-date" value="2020-01-01">
-                    <input type="date" id="end-date" value="2023-12-31">
+                <div class="action-buttons">
+                    <button id="run-backtest" class="btn-primary">🚀 Run Backtest</button>
+                    <button id="reset-config" class="btn-secondary">🔄 Reset</button>
                 </div>
-                
-                <div class="control-group">
-                    <label for="strategy-select">Vortex Strategy:</label>
-                    <select id="strategy-select">
-                        <option value="doubling">Standard Doubling (×2)</option>
-                        <option value="tripling">Tripling (×3)</option>
-                        <option value="custom">Custom Multiplier</option>
-                    </select>
-                </div>
-                
-                <div class="control-group">
-                    <label for="base-select">Numerical Base:</label>
-                    <select id="base-select">
-                        <option value="10">Base-10 (Standard)</option>
-                        <option value="8">Base-8 (Octal)</option>
-                        <option value="9">Base-9 (Comparison)</option>
-                    </select>
-                </div>
-                
-                <button id="run-backtest" class="primary-button">Run Backtest</button>
-                <button id="load-data" class="secondary-button">Load Data</button>
             </section>
 
-            <section class="results-section">
-                <h2>Vortex Analysis Results</h2>
+            <!-- Results Section -->
+            <section class="results-section" id="results-section" style="display: none;">
+                <h2>📈 Backtest Results</h2>
                 
-                <div class="tabs">
-                    <button class="tab active" data-tab="chart">Price Chart</button>
-                    <button class="tab" data-tab="patterns">Vortex Patterns</button>
-                    <button class="tab" data-tab="performance">Performance</button>
-                    <button class="tab" data-tab="critique">Mathematical Critique</button>
+                <!-- Performance Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>Total Return</h3>
+                        <div class="metric-value" id="total-return">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Win Rate</h3>
+                        <div class="metric-value" id="win-rate">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Total Trades</h3>
+                        <div class="metric-value" id="total-trades">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Max Drawdown</h3>
+                        <div class="metric-value negative" id="max-drawdown">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Sharpe Ratio</h3>
+                        <div class="metric-value" id="sharpe-ratio">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Final Capital</h3>
+                        <div class="metric-value" id="final-capital">—</div>
+                    </div>
                 </div>
                 
+                <!-- Navigation Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="chart">📊 Chart & Signals</button>
+                    <button class="tab" data-tab="trades">📋 Trade History</button>
+                    <button class="tab" data-tab="analysis">🔍 Pattern Analysis</button>
+                </div>
+                
+                <!-- Tab Content -->
                 <div class="tab-content">
-                    <div id="chart-content" class="tab-panel active">
-                        <canvas id="price-chart" width="800" height="400"></canvas>
-                        <div id="chart-status">Load data to display price chart</div>
-                    </div>
-                    
-                    <div id="patterns-content" class="tab-panel">
-                        <div class="pattern-grid">
-                            <div class="pattern-card">
-                                <h3>Digital Root Sequence</h3>
-                                <div id="digital-root-display">No data loaded</div>
-                            </div>
-                            <div class="pattern-card">
-                                <h3>Doubling Cycle</h3>
-                                <div id="doubling-cycle-display">1 → 2 → 4 → 8 → 7 → 5 → 1</div>
-                            </div>
-                            <div class="pattern-card">
-                                <h3>Tesla's 3-6-9</h3>
-                                <div id="tesla-pattern-display">No patterns detected</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="performance-content" class="tab-panel">
-                        <div class="metrics-grid">
-                            <div class="metric-card">
-                                <h3>Total Return</h3>
-                                <div class="metric-value" id="total-return">—</div>
-                            </div>
-                            <div class="metric-card">
-                                <h3>Win Rate</h3>
-                                <div class="metric-value" id="win-rate">—</div>
-                            </div>
-                            <div class="metric-card">
-                                <h3>Max Drawdown</h3>
-                                <div class="metric-value" id="max-drawdown">—</div>
-                            </div>
-                            <div class="metric-card">
-                                <h3>Sharpe Ratio</h3>
-                                <div class="metric-value" id="sharpe-ratio">—</div>
-                            </div>
+                    <div id="chart-tab" class="tab-panel active">
+                        <div id="price-chart-container">
+                            <canvas id="price-chart" width="100%" height="400"></canvas>
+                            <div id="chart-status">Chart will display after running backtest</div>
                         </div>
                         
-                        <div class="comparison-section">
-                            <h3>vs Random Strategy</h3>
-                            <div id="random-comparison">Run backtest to compare performance</div>
+                        <div class="signal-legend">
+                            <h4>Signal Legend</h4>
+                            <div class="legend-grid">
+                                <div class="legend-item"><span class="signal-buy">🟢</span> Buy Signal</div>
+                                <div class="legend-item"><span class="signal-sell">🔴</span> Sell Signal</div>
+                                <div class="legend-item"><span class="signal-hold">⚪</span> Hold Position</div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div id="critique-content" class="tab-panel">
-                        <div class="critique-section">
-                            <h3>Mathematical Analysis</h3>
-                            <p>This section provides critical analysis of vortex mathematics:</p>
-                            <ul>
-                                <li><strong>Arbitrariness of Base-10:</strong> Patterns only emerge in decimal; no universal significance</li>
-                                <li><strong>Modular Arithmetic:</strong> Digital roots are simply n mod 9 calculations</li>
-                                <li><strong>Pareidolia:</strong> Tendency to see meaningful patterns in random data</li>
-                                <li><strong>Lack of Empirical Evidence:</strong> No peer-reviewed studies support trading efficacy</li>
-                            </ul>
-                            
-                            <h3>Statistical Validation</h3>
-                            <div id="statistical-analysis">
-                                <p>Performance comparison with random entry strategies will appear here after backtesting.</p>
+                    <div id="trades-tab" class="tab-panel">
+                        <div class="trades-container">
+                            <div id="trades-table">No trades to display - run backtest first</div>
+                        </div>
+                    </div>
+                    
+                    <div id="analysis-tab" class="tab-panel">
+                        <div class="analysis-grid">
+                            <div class="analysis-card">
+                                <h4>Digital Root Distribution</h4>
+                                <div id="root-distribution">No data available</div>
+                            </div>
+                            <div class="analysis-card">
+                                <h4>Strategy Performance</h4>
+                                <div id="strategy-performance">Run backtest to see analysis</div>
                             </div>
                         </div>
                     </div>

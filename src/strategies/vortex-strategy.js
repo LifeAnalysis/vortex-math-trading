@@ -3,7 +3,10 @@
  * Applies vortex mathematics principles to generate trading signals
  */
 
-const VortexMath = require('../core/vortex-math.js');
+// Support both Node.js and browser environments without redeclaring globals
+const VM = (typeof module !== 'undefined' && module.exports)
+    ? require('../core/vortex-math.js')
+    : (typeof window !== 'undefined' ? window.VortexMath : null);
 
 class VortexStrategy {
     
@@ -170,7 +173,7 @@ class VortexStrategy {
         let reasoning = [];
         
         // Check for doubling sequence filter first (acts as exclusion filter)
-        if (this.config.useSequenceFilter && !VortexMath.isInDoublingSequence(digitalRoot)) {
+        if (this.config.useSequenceFilter && !VM.isInDoublingSequence(digitalRoot)) {
             action = 'HOLD';
             reasoning.push(`Digital root ${digitalRoot} not in doubling sequence - no action`);
             return {
@@ -180,7 +183,7 @@ class VortexStrategy {
         }
         
         // Check for Tesla numbers (3, 6, 9) filter
-        if (this.config.useTeslaFilter && VortexMath.isTeslaNumber(digitalRoot)) {
+        if (this.config.useTeslaFilter && VM.isTeslaNumber(digitalRoot)) {
             if (digitalRoot === 9) {
                 action = 'HOLD';
                 reasoning.push('Tesla balance number (9) - maintain position');
@@ -207,7 +210,7 @@ class VortexStrategy {
         
         // Pattern analysis - check for sequence transitions
         if (previousData) {
-            const sequence = VortexMath.generateVortexSequence(previousData.digitalRoot, 2, 9, 3);
+            const sequence = VM.generateVortexSequence(previousData.digitalRoot, 2, 9, 3);
             if (sequence.length > 1 && sequence[1] === digitalRoot) {
                 reasoning.push('Following vortex sequence progression');
             }
@@ -389,8 +392,8 @@ class VortexStrategy {
      * @returns {Object} Vortex pattern analysis
      */
     analyzeVortexPatterns(dailyData) {
-        const doublingSequenceDays = dailyData.filter(d => VortexMath.isInDoublingSequence(d.digitalRoot));
-        const teslaDays = dailyData.filter(d => VortexMath.isTeslaNumber(d.digitalRoot));
+        const doublingSequenceDays = dailyData.filter(d => VM.isInDoublingSequence(d.digitalRoot));
+        const teslaDays = dailyData.filter(d => VM.isTeslaNumber(d.digitalRoot));
         
         // Calculate performance on different vortex patterns
         const doublingSequenceReturns = this.calculatePatternReturns(doublingSequenceDays);
@@ -501,4 +504,9 @@ class VortexStrategy {
     }
 }
 
-module.exports = VortexStrategy;
+// UMD export: Node.js (CommonJS) and browser global
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = VortexStrategy;
+} else if (typeof window !== 'undefined') {
+    window.VortexStrategy = VortexStrategy;
+}

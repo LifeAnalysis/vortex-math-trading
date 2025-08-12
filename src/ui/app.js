@@ -36,26 +36,28 @@ function initializeApp() {
  * Setup all event listeners for the UI
  */
 function setupEventListeners() {
-    // Tab navigation
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // Tab navigation (match current HTML: .tab buttons with data-tab)
+    document.querySelectorAll('.tab').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const tabName = e.target.dataset.tab;
-            switchTab(tabName);
+            const tabName = e.currentTarget?.dataset?.tab;
+            if (tabName) switchTab(tabName);
         });
     });
     
-    // Strategy configuration
-    document.getElementById('buySignal').addEventListener('change', updateStrategyConfig);
-    document.getElementById('sellSignal').addEventListener('change', updateStrategyConfig);
-    document.getElementById('holdSignal').addEventListener('change', updateStrategyConfig);
-    document.getElementById('teslaFilter').addEventListener('change', updateStrategyConfig);
-    document.getElementById('sequenceFilter').addEventListener('change', updateStrategyConfig);
-    document.getElementById('initialCapital').addEventListener('input', updateStrategyConfig);
+    // Strategy configuration (only attach if present)
+    document.getElementById('buySignal')?.addEventListener('change', updateStrategyConfig);
+    document.getElementById('sellSignal')?.addEventListener('change', updateStrategyConfig);
+    document.getElementById('holdSignal')?.addEventListener('change', updateStrategyConfig);
+    document.getElementById('teslaFilter')?.addEventListener('change', updateStrategyConfig);
+    document.getElementById('sequenceFilter')?.addEventListener('change', updateStrategyConfig);
+    document.getElementById('initialCapital')?.addEventListener('input', updateStrategyConfig);
     
-    // Action buttons
-    document.getElementById('runBacktest').addEventListener('click', runBacktest);
-    document.getElementById('exportData').addEventListener('click', exportData);
-    document.getElementById('resetStrategy').addEventListener('click', resetStrategy);
+    // Action buttons (current HTML uses run-backtest and load-data)
+    document.getElementById('runBacktest')?.addEventListener('click', runBacktest);
+    document.getElementById('exportData')?.addEventListener('click', exportData);
+    document.getElementById('resetStrategy')?.addEventListener('click', resetStrategy);
+    document.getElementById('run-backtest')?.addEventListener('click', runBacktest);
+    document.getElementById('load-data')?.addEventListener('click', loadHistoricalData);
 }
 
 /**
@@ -63,17 +65,18 @@ function setupEventListeners() {
  * @param {string} tabName - Name of the tab to switch to
  */
 function switchTab(tabName) {
-    // Update active tab button
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // Update active tab button (match current HTML)
+    document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-    
-    // Update active tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
+    const activeBtn = document.querySelector(`.tab[data-tab="${tabName}"]`);
+    activeBtn?.classList.add('active');
+
+    // Update active tab content (match current HTML ids: `${tabName}-content`)
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
     });
-    document.getElementById(`${tabName}-tab`).classList.add('active');
+    document.getElementById(`${tabName}-content`)?.classList.add('active');
     
     appState.activeTab = tabName;
     updateTabContent(tabName);
