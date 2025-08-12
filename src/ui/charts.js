@@ -41,31 +41,31 @@ function renderPriceChartWithVortex(data) {
             width: container.clientWidth,
             height: 500,
             layout: {
-                background: { type: 'solid', color: '#fafafa' },
-                textColor: '#333',
+                background: { type: 'solid', color: '#000000' },
+                textColor: '#e0e0e0',
                 fontSize: 12,
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                fontFamily: 'JetBrains Mono, monospace'
             },
             grid: {
-                vertLines: { color: '#e0e0e0', style: 1 },
-                horzLines: { color: '#e0e0e0', style: 1 }
+                vertLines: { color: 'rgba(0, 255, 136, 0.1)', style: 1 },
+                horzLines: { color: 'rgba(0, 255, 136, 0.1)', style: 1 }
             },
             rightPriceScale: {
                 borderVisible: true,
-                borderColor: '#cccccc',
-                textColor: '#333'
+                borderColor: 'rgba(0, 255, 136, 0.3)',
+                textColor: '#00ff88'
             },
             timeScale: {
                 borderVisible: true,
-                borderColor: '#cccccc',
-                textColor: '#333',
+                borderColor: 'rgba(0, 255, 136, 0.3)',
+                textColor: '#00ff88',
                 timeVisible: true,
                 secondsVisible: false
             },
             crosshair: {
                 mode: 1, // Normal crosshair mode
-                vertLine: { color: '#9B7DFF', width: 1, style: 3 },
-                horzLine: { color: '#9B7DFF', width: 1, style: 3 }
+                vertLine: { color: '#00ff88', width: 1, style: 2 },
+                horzLine: { color: '#00ff88', width: 1, style: 2 }
             },
             handleScroll: true,
             handleScale: true
@@ -78,12 +78,12 @@ function renderPriceChartWithVortex(data) {
         if (typeof tvChart.addCandlestickSeries === 'function') {
             console.log('[charts] Using addCandlestickSeries method');
             tvSeries = tvChart.addCandlestickSeries({
-                upColor: '#26a69a',
-                downColor: '#ef5350',
-                borderUpColor: '#26a69a',
-                borderDownColor: '#ef5350',
-                wickUpColor: '#26a69a',
-                wickDownColor: '#ef5350',
+                upColor: '#00ff88',
+                downColor: '#ff4757',
+                borderUpColor: '#00ff88',
+                borderDownColor: '#ff4757',
+                wickUpColor: '#00ff88',
+                wickDownColor: '#ff4757',
                 borderVisible: true,
                 wickVisible: true,
                 priceLineVisible: true,
@@ -92,8 +92,8 @@ function renderPriceChartWithVortex(data) {
         } else if (typeof tvChart.addSeries === 'function') {
             console.log('[charts] Using addSeries method with CandlestickSeries');
             tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
-                upColor: '#26a69a',
-                downColor: '#ef5350'
+                upColor: '#00ff88',
+                downColor: '#ff4757'
             });
         } else {
             console.error('[charts] No suitable method found for adding candlestick series');
@@ -253,10 +253,10 @@ function drawVortexLabels(container, chart, dataPoints) {
                 label.style.fontWeight = 'bold';
                 label.style.borderRadius = '50%'; // Make it circular
                 label.style.pointerEvents = 'none';
-                label.style.background = '#28a745';
-                label.style.color = '#fff';
-                label.style.border = '2px solid #1e7e34';
-                label.style.boxShadow = '0 2px 6px rgba(40, 167, 69, 0.4)';
+                label.style.background = '#00ff88';
+                label.style.color = '#000';
+                label.style.border = '2px solid #00cc6a';
+                label.style.boxShadow = '0 2px 6px rgba(0, 255, 136, 0.5)';
                 label.style.zIndex = '1000';
                 label.style.minWidth = '20px';
                 label.style.height = '20px';
@@ -285,10 +285,10 @@ function drawVortexLabels(container, chart, dataPoints) {
                 label.style.fontWeight = 'bold';
                 label.style.borderRadius = '50%'; // Make it circular
                 label.style.pointerEvents = 'none';
-                label.style.background = '#dc3545';
+                label.style.background = '#ff4757';
                 label.style.color = '#fff';
-                label.style.border = '2px solid #c82333';
-                label.style.boxShadow = '0 2px 6px rgba(220, 53, 69, 0.4)';
+                label.style.border = '2px solid #ff3742';
+                label.style.boxShadow = '0 2px 6px rgba(255, 71, 87, 0.5)';
                 label.style.zIndex = '1000';
                 label.style.minWidth = '20px';
                 label.style.height = '20px';
