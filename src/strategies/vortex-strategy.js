@@ -241,13 +241,17 @@ class VortexStrategy {
      * @returns {Object} Position object
      */
     openPosition(action, dataPoint, capital) {
+        // Calculate actual shares that can be bought with available capital
+        const shares = capital / dataPoint.price;
+        
         return {
             action: action,
             date: dataPoint.date,
             price: dataPoint.price,
             digitalRoot: dataPoint.digitalRoot,
             capital: capital,
-            size: this.config.maxPositionSize
+            shares: shares,  // Actual shares bought
+            size: this.config.maxPositionSize  // Keep for backward compatibility
         };
     }
     
@@ -258,9 +262,10 @@ class VortexStrategy {
      * @returns {Object} Trade result
      */
     closePosition(position, dataPoint) {
-        const profit = (dataPoint.price - position.price) * position.size;
-        const profitPercent = ((dataPoint.price - position.price) / position.price) * 100;
+        // Calculate profit using actual capital appreciation
         const exitCapital = position.capital * (dataPoint.price / position.price);
+        const profit = exitCapital - position.capital;
+        const profitPercent = ((dataPoint.price - position.price) / position.price) * 100;
         
         return {
             entryDate: position.date,
@@ -269,7 +274,7 @@ class VortexStrategy {
             exitPrice: dataPoint.price,
             entryDigitalRoot: position.digitalRoot,
             exitDigitalRoot: dataPoint.digitalRoot,
-            profit: profit,
+            profit: profit,  // Now matches actual capital gain
             profitPercent: profitPercent,
             exitCapital: exitCapital,
             holdingPeriod: this.calculateHoldingPeriod(position.date, dataPoint.date)
