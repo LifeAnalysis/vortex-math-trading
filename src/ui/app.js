@@ -17,7 +17,7 @@ const appState = {
         holdSignal: 9,
         initialCapital: 10000,
         startDate: '2020-01-01',
-        endDate: '2024-12-31',
+        endDate: '2025-01-09',
         teslaFilter: true,
         sequenceFilter: true,
         positionSize: 1.0,

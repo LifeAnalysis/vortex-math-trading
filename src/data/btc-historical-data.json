@@ -2,17 +2,18 @@
   "metadata": {
     "coin": "bitcoin",
     "vs_currency": "usd",
-    "period": "2020-2024",
+    "period": "2020-2025",
     "from_timestamp": 1577836800,
-    "to_timestamp": 1735689600,
+    "to_timestamp": 1736380800,
     "interval": "daily",
-    "data_points": 1817,
+    "data_points": 1825,
     "fetched_at": "2025-08-12",
     "sources": [
       "Historical data 2020-2023",
-      "CoinGecko API 2024"
+      "CoinGecko API 2024",
+      "CoinGecko API 2025-08-12 update"
     ],
-    "note": "Merged dataset combining historical data with fresh CoinGecko data"
+    "note": "Complete dataset with latest daily updates from CoinGecko API"
   },
   "prices": [
     [
@@ -7282,6 +7283,38 @@
     [
       1735689600000,
       93507.85874741491
+    ],
+    [
+      1735776000000,
+      94384.1761153871
+    ],
+    [
+      1735862400000,
+      96852.14681235075
+    ],
+    [
+      1735948800000,
+      98084.34279280754
+    ],
+    [
+      1736035200000,
+      98256.73876849933
+    ],
+    [
+      1736121600000,
+      98364.58946599838
+    ],
+    [
+      1736208000000,
+      102229.39453189743
+    ],
+    [
+      1736294400000,
+      96952.09886774956
+    ],
+    [
+      1736380800000,
+      95016.71440989176
     ]
   ]
 }
