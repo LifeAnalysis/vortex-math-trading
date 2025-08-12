@@ -19,36 +19,33 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Init chart once
-    if (!tvChart) {
-        console.log('[charts] Creating new chart');
-        try {
-            tvChart = LightweightCharts.createChart(container, {
-                layout: { 
-                    background: { type: 'solid', color: '#ffffff' }, 
-                    textColor: '#333' 
-                },
-                grid: { 
-                    vertLines: { color: '#eee' }, 
-                    horzLines: { color: '#eee' } 
-                },
-                rightPriceScale: { borderVisible: false },
-                timeScale: { borderVisible: false },
-                autoSize: true,
-                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-            });
-            tvSeries = tvChart.addCandlestickSeries({
-                upColor: '#26a69a',
-                downColor: '#ef5350',
-                borderVisible: false,
-                wickUpColor: '#26a69a',
-                wickDownColor: '#ef5350'
-            });
-            console.log('[charts] Chart created successfully');
-        } catch (err) {
-            console.error('[charts] Error creating chart:', err);
+    // Always recreate chart to avoid state issues
+    if (tvChart) {
+        console.log('[charts] Removing existing chart');
+        tvChart.remove();
+        tvChart = null;
+        tvSeries = null;
+    }
+
+    console.log('[charts] Creating new chart');
+    try {
+        tvChart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 500
+        });
+        
+        console.log('[charts] Chart object created, adding candlestick series...');
+        tvSeries = tvChart.addCandlestickSeries();
+        
+        console.log('[charts] Series created:', !!tvSeries);
+        if (!tvSeries) {
+            console.error('[charts] Failed to create candlestick series');
             return;
         }
+        console.log('[charts] Chart and series created successfully');
+    } catch (err) {
+        console.error('[charts] Error creating chart:', err);
+        return;
     }
 
     // Map data to OHLC if available; else derive from close
@@ -70,11 +67,17 @@ function renderPriceChartWithVortex(data) {
         return;
     }
     
+    if (!tvSeries) {
+        console.error('[charts] Series not available for setting data');
+        return;
+    }
+    
     try {
         tvSeries.setData(candles);
         console.log('[charts] Chart data set successfully');
     } catch (err) {
         console.error('[charts] Error setting chart data:', err);
+        console.error('[charts] tvSeries state:', tvSeries);
         return;
     }
 
