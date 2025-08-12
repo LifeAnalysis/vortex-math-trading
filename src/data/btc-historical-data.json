@@ -6,7 +6,7 @@
     "from_timestamp": 1514764800,
     "to_timestamp": 1754956800,
     "interval": "daily",
-    "data_points": 2771,
+    "data_points": 2770,
     "fetched_at": "2025-08-12",
     "sources": [
       "CoinGecko API 2018-2019 historical data",
@@ -14,7 +14,9 @@
       "CoinGecko API 2024",
       "CoinGecko API Jan-Aug 2025 complete update"
     ],
-    "note": "Complete Bitcoin dataset from 2018 through August 10, 2025 with comprehensive historical coverage"
+    "note": "Complete Bitcoin dataset from 2018 through August 10, 2025 with comprehensive historical coverage",
+    "cleaned_at": "2025-08-12T13:58:56.565Z",
+    "cleaning_info": "Removed 1 invalid/duplicate entries, sorted chronologically"
   },
   "prices": [
     [
@@ -2940,10 +2942,6 @@
     [
       1577836800000,
       7195.153895430029
-    ],
-    [
-      1577836800000,
-      7194.89
     ],
     [
       1577923200000,

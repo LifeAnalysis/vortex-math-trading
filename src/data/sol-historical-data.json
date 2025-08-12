@@ -6,7 +6,7 @@
     "from_timestamp": 1614556800,
     "to_timestamp": 1754870400,
     "interval": "daily",
-    "data_points": 1626,
+    "data_points": 1625,
     "fetched_at": "2025-08-12",
     "sources": [
       "CoinGecko MCP API historical data",
@@ -16,7 +16,9 @@
     "extended_at": "2025-08-12T13:29:02.025Z",
     "extension_info": "Added 212 data points from January 12, 2025 to August 11, 2025 using CoinGecko MCP API",
     "gap_filled_at": "2025-08-12T13:44:38.187Z",
-    "gap_filled_info": "Added 922 missing data points from June 25, 2022 to January 1, 2025 using CoinGecko MCP API"
+    "gap_filled_info": "Added 922 missing data points from June 25, 2022 to January 1, 2025 using CoinGecko MCP API",
+    "cleaned_at": "2025-08-12T13:58:56.567Z",
+    "cleaning_info": "Removed 1 invalid/duplicate entries, sorted chronologically"
   },
   "prices": [
     [
@@ -5626,10 +5628,6 @@
     [
       1735603200000,
       190.70066508822853
-    ],
-    [
-      1735689600000,
-      189.45168366761857
     ],
     [
       1735689600000,
