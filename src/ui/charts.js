@@ -39,7 +39,8 @@ function renderPriceChartWithVortex(data) {
     try {
         tvChart = LightweightCharts.createChart(container, {
             width: container.clientWidth || 800,
-            height: 500, // Fixed height to match CSS
+            height: container.clientHeight || 400,
+            autoSize: true,
             layout: {
                 background: { type: 'solid', color: '#000000' },
                 textColor: '#e0e0e0',
@@ -63,9 +64,9 @@ function renderPriceChartWithVortex(data) {
                 secondsVisible: false
             },
             crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-                vertLine: { color: '#00ff88', width: 1, style: LightweightCharts.LineStyle.Dashed },
-                horzLine: { color: '#00ff88', width: 1, style: LightweightCharts.LineStyle.Dashed }
+                mode: 1, // Normal crosshair mode (v4 compatible)
+                vertLine: { color: '#00ff88', width: 1, style: 2 }, // Dashed style
+                horzLine: { color: '#00ff88', width: 1, style: 2 }  // Dashed style
             },
             handleScroll: true,
             handleScale: true
@@ -79,38 +80,28 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart methods available:', Object.getOwnPropertyNames(tvChart));
         
         try {
-            // TradingView Lightweight Charts v5 API - use addSeries with series type
-            console.log('[charts] Creating line series using v5 API');
-            console.log('[charts] Available series types:', Object.keys(LightweightCharts));
+            // Simple approach - just create the line series with minimal options
+            console.log('[charts] Creating basic line series');
             
-            tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
-                color: '#87CEEB', // v4 option name
-                lineColor: '#87CEEB', // v5 option name
-                lineWidth: 3,
+            tvSeries = tvChart.addLineSeries({
+                color: '#87CEEB',
+                lineWidth: 2,
                 priceLineVisible: true,
-                lastValueVisible: true,
-                visible: true
+                lastValueVisible: true
             });
-
-            // Ensure options are applied regardless of version differences
-            try { tvSeries.applyOptions({ color: '#87CEEB', lineColor: '#87CEEB', lineWidth: 3, visible: true, priceLineVisible: true, lastValueVisible: true }); } catch {}
             
-            console.log('[charts] Line series created successfully:', tvSeries);
-            console.log('[charts] Series methods:', Object.getOwnPropertyNames(tvSeries));
+            console.log('[charts] Line series created successfully');
             
         } catch (lineError) {
             console.error('[charts] Line series failed, trying area series:', lineError);
             
             try {
-                // Fallback to area series using v5 API
-                tvSeries = tvChart.addSeries(LightweightCharts.AreaSeries, {
+                // Fallback to area series with minimal options
+                tvSeries = tvChart.addAreaSeries({
                     lineColor: '#87CEEB',
                     topColor: 'rgba(135, 206, 235, 0.4)',
                     bottomColor: 'rgba(135, 206, 235, 0.0)',
-                    lineWidth: 3,
-                    priceLineVisible: true,
-                    lastValueVisible: true,
-                    visible: true
+                    lineWidth: 2
                 });
                 
                 console.log('[charts] Area series created as fallback');
@@ -119,8 +110,8 @@ function renderPriceChartWithVortex(data) {
                 console.error('[charts] Area series also failed, trying candlestick:', areaError);
                 
                 try {
-                    // Last fallback to candlestick using v5 API
-                    tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
+                    // Last fallback to candlestick with minimal options
+                    tvSeries = tvChart.addCandlestickSeries({
                         upColor: '#00ff88',
                         downColor: '#ff4757'
                     });
@@ -130,10 +121,10 @@ function renderPriceChartWithVortex(data) {
                 } catch (candlestickError) {
                     console.error('[charts] All series types failed:', candlestickError);
                     
-                    // Ultimate fallback - try basic series creation
+                    // Ultimate fallback - try the old working approach we had before
                     try {
-                        console.log('[charts] Trying basic line series creation without options');
-                        tvSeries = tvChart.addSeries(LightweightCharts.LineSeries);
+                        console.log('[charts] Trying basic series creation without options');
+                        tvSeries = tvChart.addLineSeries();
                         if (tvSeries) {
                             console.log('[charts] Basic line series created successfully');
                         }
@@ -158,21 +149,12 @@ function renderPriceChartWithVortex(data) {
     }
 
     // Map data to format compatible with different series types
-    // Try both timestamp and date string formats for maximum compatibility
-    const chartData = data.map(d => {
-        const timestampSeconds = Math.floor(d.timestamp / 1000);
-        const dateString = d.date || new Date(d.timestamp).toISOString().split('T')[0];
-        
-        return {
-            time: timestampSeconds, // Unix timestamp in seconds
-            value: d.price,
-            digitalRoot: d.digitalRoot,
-            date: dateString
-        };
-    }).filter(d => d.time && d.value && !isNaN(d.value) && d.time > 0);
-    
-    console.log('[charts] Raw data sample:', data.slice(0, 2));
-    console.log('[charts] Processed chart data sample:', chartData.slice(0, 2));
+    const chartData = data.map(d => ({
+        time: Math.floor(d.timestamp / 1000),
+        value: d.price,
+        digitalRoot: d.digitalRoot,
+        date: d.date
+    })).filter(d => d.time && d.value && !isNaN(d.value));
 
     console.log('[charts] setting chart data', chartData.length);
     console.log('[charts] sample chart data:', chartData.slice(0, 3));
@@ -187,62 +169,26 @@ function renderPriceChartWithVortex(data) {
         return;
     }
     
-            try {
-            console.log('[charts] About to set data on series:', tvSeries);
-            console.log('[charts] Data format check - first 3 items:', chartData.slice(0, 3));
-            
-            // Prepare minimal data for series (time/value only) and set immediately
-            const seriesData = chartData.map(p => ({ time: p.time, value: p.value }));
-            console.log('[charts] Setting series data (time,value) points:', seriesData.length);
-            tvSeries.setData(seriesData);
-            try { tvSeries.applyOptions({ visible: true, color: '#87CEEB', lineColor: '#87CEEB', lineWidth: 3 }); } catch {}
-            // Ensure full range is visible asap
-            try { tvChart.timeScale().fitContent(); } catch {}
-            console.log('[charts] Chart data set successfully on series');
-            console.log('[charts] Chart data range - first:', chartData[0]);
-            console.log('[charts] Chart data range - last:', chartData[chartData.length - 1]);
-            console.log('[charts] Price range - min:', Math.min(...chartData.map(d => d.value)));
-            console.log('[charts] Price range - max:', Math.max(...chartData.map(d => d.value)));
-            
-            // Verify data was actually set
-            setTimeout(() => {
-                if (tvChart && tvSeries) {
-                    console.log('[charts] Checking if data is visible on series...');
-                    const visibleRange = tvChart.timeScale().getVisibleRange();
-                    console.log('[charts] Visible time range:', visibleRange);
-                    
-                    // Force chart to show the data
-                    tvChart.timeScale().fitContent();
-                    console.log('[charts] Chart fitted to content');
-                    
-                    // Check series visibility
-                    try {
-                        const seriesOptions = tvSeries.options();
-                        console.log('[charts] Series options after data set:', seriesOptions);
-                    } catch (e) {
-                        console.log('[charts] Could not get series options:', e);
-                    }
-                }
-            }, 200);
-            
-        } catch (err) {
-            console.error('[charts] Error setting chart data:', err);
-            console.error('[charts] tvSeries state:', tvSeries);
-            console.error('[charts] Data sample:', chartData.slice(0, 3));
-            return;
-        }
+    try {
+        tvSeries.setData(chartData);
+        console.log('[charts] Chart data set successfully');
+    } catch (err) {
+        console.error('[charts] Error setting chart data:', err);
+        console.error('[charts] tvSeries state:', tvSeries);
+        console.error('[charts] Data sample:', chartData.slice(0, 3));
+        return;
+    }
 
-    // Draw digital root labels above each data point after first paint to avoid blocking render
-    requestAnimationFrame(() => drawVortexLabels(container, tvChart, chartData));
+    // Draw digital root labels above each data point
+    drawVortexLabels(container, tvChart, chartData);
     
     // Add trade signals if available
     addTradeSignals(tvChart, tvSeries, chartData);
     
-    // Store cleanup function for labels only (removed problematic resize handler)
+    // Store cleanup function for labels only (no resize handler to avoid conflicts)
     const existingCleanup = container._cleanupLabels;
     container._cleanupLabels = () => {
         if (existingCleanup) existingCleanup();
-        // No resize listener to remove since we're using autoSize: true
     };
 }
 
