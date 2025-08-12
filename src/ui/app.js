@@ -16,12 +16,11 @@ const appState = {
         sellSignal: 5,
         holdSignal: 9,
         initialCapital: 10000,
-        startDate: '2020-01-01',
-        endDate: '2025-01-09',
+        startDate: '2018-01-01',
+        endDate: '2025-08-12',
         teslaFilter: true,
         sequenceFilter: true,
         positionSize: 1.0,
-
         feePercent: 0.10,
         slippageBps: 5
     },
@@ -160,7 +159,7 @@ function switchTab(tabName) {
  */
 async function loadHistoricalData() {
     try {
-        console.log('[app] Loading complete Bitcoin dataset (2020-2024)...');
+        console.log('[app] Loading complete Bitcoin dataset (2018-2025)...');
         const res = await fetch('/src/data/btc-historical-data.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.json();
@@ -178,8 +177,8 @@ async function loadHistoricalData() {
             ' - $' + 
             Math.max(...prices).toFixed(2)
         );
-        console.log('[app] Total return since 2020:', (((prices[prices.length-1] - prices[0]) / prices[0]) * 100).toFixed(2) + '%');
-        showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records (2020-2024)`, 'success');
+        console.log('[app] Total return since 2018:', (((prices[prices.length-1] - prices[0]) / prices[0]) * 100).toFixed(2) + '%');
+        showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records (${raw.metadata.period})`, 'success');
     } catch (error) {
         console.error('Error loading historical data:', error);
         showNotification('Error loading data. Please check console for details.', 'error');
@@ -216,28 +215,37 @@ async function runBacktest() {
 
         });
 
-        console.log('[app] Running strategy on', processedData.dailyData.length, 'daily points');
-        backtestResults = strategy.backtest(processedData.dailyData, appState.config.initialCapital);
+        // Filter data by configured date range
+        const filteredData = filterDataByDateRange(processedData.dailyData, appState.config.startDate, appState.config.endDate);
+        console.log('[app] Running strategy on', filteredData.length, 'daily points (filtered from', processedData.dailyData.length, 'total)');
+        console.log('[app] Date range:', appState.config.startDate, 'to', appState.config.endDate);
+        
+        if (filteredData.length === 0) {
+            throw new Error('No data available for the selected date range');
+        }
+        
+        backtestResults = strategy.backtest(filteredData, appState.config.initialCapital);
         console.log('[app] Backtest done. Final capital:', backtestResults.finalCapital);
         console.log('[app] Backtest results structure:', Object.keys(backtestResults));
         console.log('[app] Performance data:', backtestResults.performance);
 
-        // Calculate buy and hold comparison
-        calculateBuyAndHoldComparison();
+        // Calculate buy and hold comparison using filtered data
+        calculateBuyAndHoldComparison(filteredData);
         
         updatePerformanceMetrics();
         showResults();
 
-        // Render chart with vortex labels
+        // Render chart with vortex labels using filtered data
         if (window.renderPriceChartWithVortex) {
             try {
-                const seriesData = processedData.dailyData.map(d => ({
+                const seriesData = filteredData.map(d => ({
                     timestamp: d.timestamp,
                     price: d.price,
                     digitalRoot: d.digitalRoot,
                     date: d.date
                 }));
                 console.log('[app] Rendering chart with points:', seriesData.length);
+                console.log('[app] Chart date range:', seriesData[0]?.date, 'to', seriesData[seriesData.length-1]?.date);
                 console.log('[app] Sample data points:', seriesData.slice(0, 3));
                 
                 // Handle async chart rendering
@@ -311,15 +319,19 @@ function calculateBacktestPerformance(signals, initialCapital) {
 
 /**
  * Calculate buy and hold strategy comparison
+ * @param {Array} filteredData - The filtered data array matching the backtest period
  */
-function calculateBuyAndHoldComparison() {
-    if (!processedData || !backtestResults) return;
+function calculateBuyAndHoldComparison(filteredData) {
+    if (!filteredData || !backtestResults || filteredData.length === 0) return;
     
-    const firstPrice = processedData.dailyData[0].price;
-    const lastPrice = processedData.dailyData[processedData.dailyData.length - 1].price;
+    const firstPrice = filteredData[0].price;
+    const lastPrice = filteredData[filteredData.length - 1].price;
     
     const buyAndHoldReturn = ((lastPrice - firstPrice) / firstPrice) * 100;
     const buyAndHoldFinalCapital = appState.config.initialCapital * (lastPrice / firstPrice);
+    
+    console.log('[app] Buy & Hold comparison for period:', filteredData[0].date, 'to', filteredData[filteredData.length - 1].date);
+    console.log('[app] Buy & Hold: $' + firstPrice.toFixed(2), '→ $' + lastPrice.toFixed(2), '(' + buyAndHoldReturn.toFixed(2) + '%)');
     
     backtestResults.buyAndHold = {
         return: buyAndHoldReturn,
@@ -436,6 +448,34 @@ async function tryRenderChart() {
         const status = document.getElementById('chart-status');
         if (status) status.textContent = `Chart error: ${err.message}`;
     }
+}
+
+/**
+ * Filter data by date range
+ * @param {Array} data - Array of daily data points
+ * @param {string} startDate - Start date (YYYY-MM-DD)
+ * @param {string} endDate - End date (YYYY-MM-DD)
+ * @returns {Array} Filtered data array
+ */
+function filterDataByDateRange(data, startDate, endDate) {
+    if (!data || !Array.isArray(data)) {
+        console.warn('[app] Invalid data provided to filterDataByDateRange');
+        return [];
+    }
+    
+    const startTimestamp = new Date(startDate).getTime();
+    const endTimestamp = new Date(endDate).getTime();
+    
+    console.log('[app] Filtering data from', startDate, 'to', endDate);
+    console.log('[app] Timestamp range:', startTimestamp, 'to', endTimestamp);
+    
+    const filtered = data.filter(point => {
+        if (!point || !point.timestamp) return false;
+        return point.timestamp >= startTimestamp && point.timestamp <= endTimestamp;
+    });
+    
+    console.log('[app] Filtered', data.length, 'points down to', filtered.length, 'points');
+    return filtered;
 }
 
 /**
