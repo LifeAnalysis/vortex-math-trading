@@ -85,7 +85,11 @@ function renderPriceChartWithVortex(data) {
             
             tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
                 color: '#00ff88',
-                lineWidth: 2
+                lineWidth: 3,
+                lineStyle: LightweightCharts.LineStyle.Solid,
+                lineType: LightweightCharts.LineType.Simple,
+                priceLineVisible: true,
+                lastValueVisible: true
             });
             
             console.log('[charts] Line series created successfully');
@@ -99,7 +103,9 @@ function renderPriceChartWithVortex(data) {
                     lineColor: '#00ff88',
                     topColor: 'rgba(0, 255, 136, 0.4)',
                     bottomColor: 'rgba(0, 255, 136, 0.0)',
-                    lineWidth: 2
+                    lineWidth: 3,
+                    priceLineVisible: true,
+                    lastValueVisible: true
                 });
                 
                 console.log('[charts] Area series created as fallback');
@@ -167,15 +173,21 @@ function renderPriceChartWithVortex(data) {
         return;
     }
     
-    try {
-        tvSeries.setData(chartData);
-        console.log('[charts] Chart data set successfully');
-    } catch (err) {
-        console.error('[charts] Error setting chart data:', err);
-        console.error('[charts] tvSeries state:', tvSeries);
-        console.error('[charts] Data sample:', chartData.slice(0, 3));
-        return;
-    }
+            try {
+            tvSeries.setData(chartData);
+            console.log('[charts] Chart data set successfully');
+            console.log('[charts] Chart data range - first:', chartData[0]);
+            console.log('[charts] Chart data range - last:', chartData[chartData.length - 1]);
+            
+            // Fit the chart to the data range
+            tvChart.timeScale().fitContent();
+            
+        } catch (err) {
+            console.error('[charts] Error setting chart data:', err);
+            console.error('[charts] tvSeries state:', tvSeries);
+            console.error('[charts] Data sample:', chartData.slice(0, 3));
+            return;
+        }
 
     // Draw digital root labels above each data point
     drawVortexLabels(container, tvChart, chartData);
