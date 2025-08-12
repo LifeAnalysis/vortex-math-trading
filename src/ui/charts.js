@@ -75,24 +75,14 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart object created:', tvChart);
         console.log('[charts] Available methods on chart:', Object.getOwnPropertyNames(tvChart));
         
-        // Use line series for clean, continuous visualization
+        // Create series - try multiple approaches for maximum compatibility
+        console.log('[charts] Creating series...');
+        console.log('[charts] Chart methods available:', Object.getOwnPropertyNames(tvChart));
+        
         try {
-            if (typeof tvChart.addLineSeries === 'function') {
-                console.log('[charts] Using addLineSeries method');
-                tvSeries = tvChart.addLineSeries({
-                    color: '#00ff88',
-                    lineWidth: 2,
-                    lineStyle: LightweightCharts.LineStyle.Solid,
-                    crosshairMarkerVisible: true,
-                    crosshairMarkerRadius: 4,
-                    crosshairMarkerBorderColor: '#00ff88',
-                    crosshairMarkerBackgroundColor: '#00ff88',
-                    lastValueVisible: true,
-                    priceLineVisible: true,
-                    title: 'BTC Price'
-                });
-            } else if (typeof tvChart.addAreaSeries === 'function') {
-                console.log('[charts] Using addAreaSeries as fallback');
+            // Method 1: Try addAreaSeries (most compatible)
+            if (typeof tvChart.addAreaSeries === 'function') {
+                console.log('[charts] Using addAreaSeries method');
                 tvSeries = tvChart.addAreaSeries({
                     lineColor: '#00ff88',
                     topColor: 'rgba(0, 255, 136, 0.4)',
@@ -103,14 +93,61 @@ function renderPriceChartWithVortex(data) {
                     priceLineVisible: true,
                     title: 'BTC Price'
                 });
-            } else {
-                console.error('[charts] No suitable method found for adding series');
-                console.log('[charts] Available methods:', Object.getOwnPropertyNames(tvChart));
+            }
+            // Method 2: Try addLineSeries 
+            else if (typeof tvChart.addLineSeries === 'function') {
+                console.log('[charts] Using addLineSeries method');
+                tvSeries = tvChart.addLineSeries({
+                    color: '#00ff88',
+                    lineWidth: 2,
+                    crosshairMarkerVisible: true,
+                    lastValueVisible: true,
+                    priceLineVisible: true,
+                    title: 'BTC Price'
+                });
+            }
+            // Method 3: Try addCandlestickSeries
+            else if (typeof tvChart.addCandlestickSeries === 'function') {
+                console.log('[charts] Using addCandlestickSeries method');
+                tvSeries = tvChart.addCandlestickSeries({
+                    upColor: '#00ff88',
+                    downColor: '#ff4757',
+                    borderVisible: false,
+                    wickUpColor: '#00ff88',
+                    wickDownColor: '#ff4757',
+                    crosshairMarkerVisible: true,
+                    lastValueVisible: true,
+                    priceLineVisible: true,
+                    title: 'BTC Price'
+                });
+            }
+            // Method 4: Try generic addSeries with type
+            else if (typeof tvChart.addSeries === 'function') {
+                console.log('[charts] Using generic addSeries method');
+                tvSeries = tvChart.addSeries('Area', {
+                    lineColor: '#00ff88',
+                    topColor: 'rgba(0, 255, 136, 0.4)',
+                    bottomColor: 'rgba(0, 255, 136, 0.0)',
+                    lineWidth: 2
+                });
+            }
+            else {
+                console.error('[charts] No suitable series creation method found');
+                console.log('[charts] Available chart methods:', Object.getOwnPropertyNames(tvChart));
                 return;
             }
         } catch (seriesError) {
             console.error('[charts] Error creating series:', seriesError);
-            return;
+            console.log('[charts] Attempting fallback series creation...');
+            
+            // Last resort fallback
+            try {
+                tvSeries = tvChart.addAreaSeries();
+                console.log('[charts] Successfully created fallback area series');
+            } catch (fallbackError) {
+                console.error('[charts] Fallback series creation also failed:', fallbackError);
+                return;
+            }
         }
         
         console.log('[charts] Series created:', tvSeries);
@@ -125,19 +162,19 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Map data to simple time-value format for line chart
-    const lineData = data.map(d => ({
+    // Map data to format compatible with different series types
+    const chartData = data.map(d => ({
         time: Math.floor(d.timestamp / 1000),
         value: d.price,
         digitalRoot: d.digitalRoot,
         date: d.date
     })).filter(d => d.time && d.value && !isNaN(d.value));
 
-    console.log('[charts] setting line data', lineData.length);
-    console.log('[charts] sample line data:', lineData.slice(0, 3));
+    console.log('[charts] setting chart data', chartData.length);
+    console.log('[charts] sample chart data:', chartData.slice(0, 3));
     
-    if (lineData.length === 0) {
-        console.error('[charts] No valid line data to display');
+    if (chartData.length === 0) {
+        console.error('[charts] No valid chart data to display');
         return;
     }
     
@@ -147,19 +184,20 @@ function renderPriceChartWithVortex(data) {
     }
     
     try {
-        tvSeries.setData(lineData);
+        tvSeries.setData(chartData);
         console.log('[charts] Chart data set successfully');
     } catch (err) {
         console.error('[charts] Error setting chart data:', err);
         console.error('[charts] tvSeries state:', tvSeries);
+        console.error('[charts] Data sample:', chartData.slice(0, 3));
         return;
     }
 
     // Draw digital root labels above each data point
-    drawVortexLabels(container, tvChart, lineData);
+    drawVortexLabels(container, tvChart, chartData);
     
     // Add trade signals if available
-    addTradeSignals(tvChart, tvSeries, lineData);
+    addTradeSignals(tvChart, tvSeries, chartData);
     
     // Handle window resize for responsiveness
     const handleResize = () => {
