@@ -428,8 +428,8 @@ function updateTradesTable() {
 function updateAnalysisTab() {
     // Digital root distribution
     const distributionElement = document.getElementById('root-distribution');
-    if (processedData) {
-        const distribution = processedData.statistics.digitalRootFrequency;
+    if (processedData && processedData.statistics && processedData.statistics.digitalRootDistribution) {
+        const distribution = processedData.statistics.digitalRootDistribution.frequencies;
         let html = '<div class="distribution-chart">';
         for (let i = 1; i <= 9; i++) {
             const count = distribution[i] || 0;
@@ -444,20 +444,29 @@ function updateAnalysisTab() {
         }
         html += '</div>';
         distributionElement.innerHTML = html;
+    } else {
+        distributionElement.innerHTML = '<p>Statistical data not available</p>';
     }
     
     // Strategy performance summary
     const performanceElement = document.getElementById('strategy-performance');
-    if (backtestResults) {
+    if (backtestResults && backtestResults.performance) {
+        // Calculate average trade return if not already available
+        const avgTradeReturn = backtestResults.performance.averageTradeReturn || 
+                               (backtestResults.performance.totalTrades > 0 ? 
+                                (backtestResults.performance.avgWin || 0) : 0);
+        
         performanceElement.innerHTML = `
             <div class="performance-summary">
                 <p><strong>Strategy:</strong> Buy on digital root ${appState.config.buySignal}, Sell on digital root ${appState.config.sellSignal}</p>
                 <p><strong>Test Period:</strong> ${appState.config.startDate} to ${appState.config.endDate}</p>
                 <p><strong>Total Trades:</strong> ${backtestResults.performance.totalTrades}</p>
                 <p><strong>Winning Trades:</strong> ${backtestResults.performance.winningTrades}</p>
-                <p><strong>Average Trade:</strong> ${backtestResults.performance.averageTradeReturn.toFixed(2)}%</p>
+                <p><strong>Average Trade:</strong> ${avgTradeReturn.toFixed(2)}%</p>
             </div>
         `;
+    } else {
+        performanceElement.innerHTML = '<p>Run backtest to see performance analysis</p>';
     }
 }
 
