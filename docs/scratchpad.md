@@ -20,6 +20,7 @@ Creating a comprehensive vortex math trading backtesting system with advanced ma
 - [2024-01-XX] When simplifying UI, maintain script inclusion consistency (missing tradingview-app.js script caused functionality gaps)
 - [2024-01-XX] User-driven HTML improvements require corresponding JavaScript updates to maintain functionality
 - [2024-01-XX] CDN dependencies are more reliable than local script files for external libraries like TradingView
+- [2025-01-17] TradingView Lightweight Charts v5 API changed: use `chart.addSeries(LineSeries, options)` instead of deprecated `chart.addLineSeries(options)` - always check API documentation when encountering "function is not a function" errors with external libraries
 
 ## Notes
 - Focus on mathematical rigor while acknowledging vortex math limitations

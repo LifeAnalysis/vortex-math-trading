@@ -5,12 +5,17 @@
 The goal is to create a comprehensive vortex math trading backtesting system that applies Marko Rodin's vortex mathematics principles to cryptocurrency trading analysis. This system will:
 
 1. **Core Vortex Math Implementation**: Digital root calculations, doubling sequence analysis (1-2-4-8-7-5), and Tesla's 3-6-9 pattern recognition
-2. **Data Integration**: Fetch historical cryptocurrency data (starting with BTC) from CoinGecko API
+2. **Multi-Cryptocurrency Data Integration**: Fetch historical cryptocurrency data (Bitcoin, Solana) from CoinGecko MCP API
 3. **Trading Strategy**: Implement buy/sell signals based on digital root patterns (buy on digital root 1, sell on digital root 5)
 4. **Backtesting Framework**: Complete backtesting engine with performance metrics and visualization
-5. **User Interface**: Clean, modern web interface for strategy configuration and results visualization
+5. **User Interface**: Clean, modern web interface with cryptocurrency selector and strategy configuration
 
-The system aims to bridge the metaphysical concepts of vortex math with practical trading application, providing a research tool for exploring numerical patterns in market data.
+**NEW REQUIREMENT (Current Focus)**: 
+- Fetch Solana daily close data from March 2021 to August 10, 2025 using CoinGecko MCP
+- Add cryptocurrency dropdown selector (Bitcoin/Solana)
+- Ensure both datasets work with existing backtesting and chart rendering systems
+
+The system aims to bridge the metaphysical concepts of vortex math with practical trading application, providing a research tool for exploring numerical patterns in market data across multiple cryptocurrencies.
 
 ## Branch Name
 `feature/vortex-math-trading-system`
@@ -96,12 +101,38 @@ The system aims to bridge the metaphysical concepts of vortex math with practica
   - Success Criteria: UI controls for strategy parameters and optimization features
   - Estimated Time: 1.5 hours
 
-### Phase 5: Testing and Documentation (Priority 5)
-- [ ] **Task 5.1**: Comprehensive testing suite
-  - Success Criteria: Full test coverage for all mathematical and trading functions
+### Phase 5: Multi-Cryptocurrency Support (Priority 5 - NEW)
+- [ ] **Task 5.1**: Fetch Solana historical data using CoinGecko MCP
+  - Success Criteria: 
+    * Use CoinGecko MCP to fetch Solana daily close data from March 2021 to August 10, 2025
+    * Save data in same JSON format as Bitcoin data (`sol-historical-data.json`)
+    * Validate data integrity and proper date range coverage
+    * Handle API rate limits and error cases gracefully
   - Estimated Time: 2 hours
 
-- [ ] **Task 5.2**: User documentation and examples
+- [ ] **Task 5.2**: Add cryptocurrency selector dropdown to UI
+  - Success Criteria:
+    * Add dropdown with Bitcoin/Solana options to configuration section
+    * Update UI state management to handle selected cryptocurrency
+    * Ensure dropdown selection updates all relevant components
+    * Maintain existing UI/UX design consistency
+  - Estimated Time: 1 hour
+
+- [ ] **Task 5.3**: Integrate multi-cryptocurrency support in backtesting system
+  - Success Criteria:
+    * Update data loading logic to switch between Bitcoin/Solana datasets
+    * Ensure vortex math calculations work identically for both cryptocurrencies
+    * Update chart rendering to display correct data based on selection
+    * Verify backtest results are accurate for both datasets
+    * Update all performance metrics and analysis
+  - Estimated Time: 2 hours
+
+### Phase 6: Testing and Documentation (Priority 6)
+- [ ] **Task 6.1**: Comprehensive testing suite for multi-crypto support
+  - Success Criteria: Full test coverage for multi-cryptocurrency functionality
+  - Estimated Time: 1.5 hours
+
+- [ ] **Task 6.2**: User documentation and examples
   - Success Criteria: Complete README with usage examples and mathematical explanations
   - Estimated Time: 1 hour
 
@@ -112,21 +143,54 @@ The system aims to bridge the metaphysical concepts of vortex math with practica
 
 ### Completed
 - [x] **Task 1.1**: Project structure and documentation setup (Commit: c5c2fbe)
+- [x] **Task 1.2**: Core vortex math functions implemented
+- [x] **Task 1.3**: HTML/CSS/JS frontend structure completed
+- [x] **Task 2.1**: CoinGecko API integration for Bitcoin historical data
+- [x] **Task 2.2**: Data preprocessing and validation
+- [x] **Task 3.1**: Vortex-based signal generation implemented
+- [x] **Task 3.2**: Backtesting engine development completed
+- [x] **Task 4.1**: TradingView charts integration and visualization completed
+
+### Next Up (NEW REQUIREMENTS)
+- **Task 5.1**: Fetch Solana historical data using CoinGecko MCP (March 2021 - August 10, 2025)
+- **Task 5.2**: Add cryptocurrency selector dropdown to UI  
+- **Task 5.3**: Integrate multi-cryptocurrency support in backtesting system
 
 ### Blocked
 *No blockers currently*
 
-### Next Up
-- Task 1.2: Implement core vortex math functions with comprehensive testing
-
 ## Current Status / Progress Tracking
 
-**Overall Progress**: 75% (Major TradingView Integration Complete)
-**Current Phase**: Phase 4 - TradingView Integration and Testing  
-**Next Milestone**: Final testing and optimization
+**Overall Progress**: 80% (Core System Complete - Adding Multi-Crypto Support)
+**Current Phase**: Phase 5 - Multi-Cryptocurrency Support (NEW REQUIREMENTS)
+**Next Milestone**: Solana data integration and cryptocurrency selector dropdown
 **Last Completed**: TradingView Charting Library integration with vortex math overlays
+**NEW FOCUS**: Extend system to support Solana alongside Bitcoin with seamless UI switching
 
 ## Executor's Feedback or Assistance Requests
+
+### Multi-Cryptocurrency Support Request (NEW) 🔄
+**Date**: Current  
+**Task**: Add Solana support with cryptocurrency selector  
+**Status**: PLANNED
+
+**User Request**: "Now I want you to fetch all of the daily closed data for Solana from March of 2021 until 10th of August 2025 and then save it in a JSON format like the way you did with the Bitcoin daily closed prices. Then I want you to create a drop-down menu where I can either select Bitcoin or Solana to then run the backtesting. If I select Solana, you will need to pass all of the data to both the backtesting model and the chart renderer. Use CoinGecko's MCP to fetch and store the data."
+
+**Implementation Plan**:
+1. **Solana Data Fetching**: Use CoinGecko MCP API to fetch Solana historical data (March 2021 - August 10, 2025)
+2. **Data Storage**: Save in JSON format matching existing Bitcoin data structure (`sol-historical-data.json`)  
+3. **UI Enhancement**: Add cryptocurrency selector dropdown to configuration section
+4. **System Integration**: Update data loading, backtesting, and chart rendering to support both cryptocurrencies
+5. **Validation**: Ensure vortex math calculations and performance metrics work correctly for both datasets
+
+**Key Requirements**:
+- Use CoinGecko MCP specifically (not regular API)
+- Match existing Bitcoin data JSON format exactly
+- Seamless UI switching between cryptocurrencies
+- All existing functionality must work for both Bitcoin and Solana
+- Date range: March 2021 to August 10, 2025 for Solana
+
+**Ready for**: Task 5.1 execution - Solana data fetching using CoinGecko MCP
 
 ### UI/UX Improvement Request ✅
 **Date**: Current  

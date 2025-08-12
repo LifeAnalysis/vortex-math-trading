@@ -12,6 +12,7 @@ let tradingViewChart = null;
 const appState = {
     activeTab: 'chart',
     config: {
+        cryptocurrency: 'bitcoin',
         buySignal: 1,
         sellSignal: 5,
         holdSignal: 9,
@@ -43,6 +44,7 @@ function initializeApp() {
  */
 function setupEventListeners() {
     // Configuration inputs
+    document.getElementById('cryptocurrency')?.addEventListener('change', onCryptocurrencyChange);
     document.getElementById('buy-signal')?.addEventListener('change', updateConfigFromForm);
     document.getElementById('sell-signal')?.addEventListener('change', updateConfigFromForm);
     document.getElementById('hold-signal')?.addEventListener('change', updateConfigFromForm);
@@ -95,6 +97,7 @@ function showResults() {
  */
 function updateConfigFromForm() {
     appState.config = {
+        cryptocurrency: document.getElementById('cryptocurrency')?.value || 'bitcoin',
         buySignal: parseInt(document.getElementById('buy-signal')?.value || 1),
         sellSignal: parseInt(document.getElementById('sell-signal')?.value || 5),
         holdSignal: parseInt(document.getElementById('hold-signal')?.value || 9),
@@ -104,15 +107,39 @@ function updateConfigFromForm() {
         teslaFilter: document.getElementById('tesla-filter')?.checked || false,
         sequenceFilter: document.getElementById('sequence-filter')?.checked || false,
         positionSize: parseFloat(document.getElementById('position-size')?.value || 1.0),
-
-
+        feePercent: 0.10,
+        slippageBps: 5
     };
+}
+
+/**
+ * Handle cryptocurrency selection change
+ */
+async function onCryptocurrencyChange() {
+    updateConfigFromForm();
+    console.log(`[app] Cryptocurrency changed to: ${appState.config.cryptocurrency}`);
+    
+    // Clear existing data and chart
+    processedData = null;
+    if (tradingViewChart) {
+        // Clear chart data
+        tradingViewChart.remove();
+        tradingViewChart = null;
+    }
+    
+    // Reload data for new cryptocurrency
+    await loadHistoricalData();
+    
+    // Update chart title or other UI elements as needed
+    const cryptoName = appState.config.cryptocurrency === 'bitcoin' ? 'Bitcoin (BTC)' : 'Solana (SOL)';
+    showNotification(`Switched to ${cryptoName}`, 'info');
 }
 
 /**
  * Reset configuration to defaults
  */
 function resetConfig() {
+    document.getElementById('cryptocurrency').value = 'bitcoin';
     document.getElementById('buy-signal').value = 1;
     document.getElementById('sell-signal').value = 5;
     document.getElementById('hold-signal').value = 9;
@@ -155,12 +182,17 @@ function switchTab(tabName) {
 }
 
 /**
- * Load historical data (simulated - in real implementation would fetch from file)
+ * Load historical data for the selected cryptocurrency
  */
 async function loadHistoricalData() {
     try {
-        console.log('[app] Loading complete Bitcoin dataset (2018-2025)...');
-        const res = await fetch('/src/data/btc-historical-data.json', { cache: 'no-store' });
+        const crypto = appState.config.cryptocurrency || 'bitcoin';
+        const cryptoName = crypto === 'bitcoin' ? 'Bitcoin' : 'Solana';
+        const cryptoSymbol = crypto === 'bitcoin' ? 'BTC' : 'SOL';
+        const fileName = crypto === 'bitcoin' ? 'btc-historical-data.json' : 'sol-historical-data.json';
+        
+        console.log(`[app] Loading complete ${cryptoName} dataset...`);
+        const res = await fetch(`/src/data/${fileName}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.json();
 
@@ -177,8 +209,8 @@ async function loadHistoricalData() {
             ' - $' + 
             Math.max(...prices).toFixed(2)
         );
-        console.log('[app] Total return since 2018:', (((prices[prices.length-1] - prices[0]) / prices[0]) * 100).toFixed(2) + '%');
-        showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records (${raw.metadata.period})`, 'success');
+        console.log('[app] Total return:', (((prices[prices.length-1] - prices[0]) / prices[0]) * 100).toFixed(2) + '%');
+        showNotification(`Loaded ${processedData.metadata.totalRecords} ${cryptoSymbol} daily records (${raw.metadata.period})`, 'success');
         
         // Set dynamic date ranges based on actual data
         updateDateInputLimits(processedData.dailyData);
