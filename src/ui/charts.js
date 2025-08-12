@@ -80,73 +80,57 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart methods available:', Object.getOwnPropertyNames(tvChart));
         
         try {
-            // Method 1: Try addAreaSeries (most compatible)
-            if (typeof tvChart.addAreaSeries === 'function') {
-                console.log('[charts] Using addAreaSeries method');
+            // Simple approach - just create the line series with minimal options
+            console.log('[charts] Creating basic line series');
+            
+            tvSeries = tvChart.addLineSeries({
+                color: '#00ff88',
+                lineWidth: 2
+            });
+            
+            console.log('[charts] Line series created successfully');
+            
+        } catch (lineError) {
+            console.error('[charts] Line series failed, trying area series:', lineError);
+            
+            try {
+                // Fallback to area series with minimal options
                 tvSeries = tvChart.addAreaSeries({
-                    lineColor: '#00ff88',
-                    topColor: 'rgba(0, 255, 136, 0.4)',
-                    bottomColor: 'rgba(0, 255, 136, 0.0)',
-                    lineWidth: 2,
-                    crosshairMarkerVisible: true,
-                    lastValueVisible: true,
-                    priceLineVisible: true,
-                    title: 'BTC Price'
-                });
-            }
-            // Method 2: Try addLineSeries 
-            else if (typeof tvChart.addLineSeries === 'function') {
-                console.log('[charts] Using addLineSeries method');
-                tvSeries = tvChart.addLineSeries({
-                    color: '#00ff88',
-                    lineWidth: 2,
-                    crosshairMarkerVisible: true,
-                    lastValueVisible: true,
-                    priceLineVisible: true,
-                    title: 'BTC Price'
-                });
-            }
-            // Method 3: Try addCandlestickSeries
-            else if (typeof tvChart.addCandlestickSeries === 'function') {
-                console.log('[charts] Using addCandlestickSeries method');
-                tvSeries = tvChart.addCandlestickSeries({
-                    upColor: '#00ff88',
-                    downColor: '#ff4757',
-                    borderVisible: false,
-                    wickUpColor: '#00ff88',
-                    wickDownColor: '#ff4757',
-                    crosshairMarkerVisible: true,
-                    lastValueVisible: true,
-                    priceLineVisible: true,
-                    title: 'BTC Price'
-                });
-            }
-            // Method 4: Try generic addSeries with type
-            else if (typeof tvChart.addSeries === 'function') {
-                console.log('[charts] Using generic addSeries method');
-                tvSeries = tvChart.addSeries('Area', {
                     lineColor: '#00ff88',
                     topColor: 'rgba(0, 255, 136, 0.4)',
                     bottomColor: 'rgba(0, 255, 136, 0.0)',
                     lineWidth: 2
                 });
-            }
-            else {
-                console.error('[charts] No suitable series creation method found');
-                console.log('[charts] Available chart methods:', Object.getOwnPropertyNames(tvChart));
-                return;
-            }
-        } catch (seriesError) {
-            console.error('[charts] Error creating series:', seriesError);
-            console.log('[charts] Attempting fallback series creation...');
-            
-            // Last resort fallback
-            try {
-                tvSeries = tvChart.addAreaSeries();
-                console.log('[charts] Successfully created fallback area series');
-            } catch (fallbackError) {
-                console.error('[charts] Fallback series creation also failed:', fallbackError);
-                return;
+                
+                console.log('[charts] Area series created as fallback');
+                
+            } catch (areaError) {
+                console.error('[charts] Area series also failed, trying candlestick:', areaError);
+                
+                try {
+                    // Last fallback to candlestick with minimal options
+                    tvSeries = tvChart.addCandlestickSeries({
+                        upColor: '#00ff88',
+                        downColor: '#ff4757'
+                    });
+                    
+                    console.log('[charts] Candlestick series created as final fallback');
+                    
+                } catch (candlestickError) {
+                    console.error('[charts] All series types failed:', candlestickError);
+                    
+                    // Ultimate fallback - try the old working approach we had before
+                    try {
+                        console.log('[charts] Trying basic series creation without options');
+                        tvSeries = tvChart.addLineSeries();
+                        if (tvSeries) {
+                            console.log('[charts] Basic line series created successfully');
+                        }
+                    } catch (basicError) {
+                        console.error('[charts] Even basic series creation failed:', basicError);
+                        return;
+                    }
+                }
             }
         }
         
