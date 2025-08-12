@@ -84,7 +84,7 @@ function renderPriceChartWithVortex(data) {
             console.log('[charts] Creating line series using v5 API');
             
             tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
-                color: '#00ff88',
+                color: '#87CEEB',
                 lineWidth: 3,
                 lineStyle: LightweightCharts.LineStyle.Solid,
                 lineType: LightweightCharts.LineType.Simple,
@@ -100,9 +100,9 @@ function renderPriceChartWithVortex(data) {
             try {
                 // Fallback to area series using v5 API
                 tvSeries = tvChart.addSeries(LightweightCharts.AreaSeries, {
-                    lineColor: '#00ff88',
-                    topColor: 'rgba(0, 255, 136, 0.4)',
-                    bottomColor: 'rgba(0, 255, 136, 0.0)',
+                    lineColor: '#87CEEB',
+                    topColor: 'rgba(135, 206, 235, 0.4)',
+                    bottomColor: 'rgba(135, 206, 235, 0.0)',
                     lineWidth: 3,
                     priceLineVisible: true,
                     lastValueVisible: true
@@ -178,9 +178,19 @@ function renderPriceChartWithVortex(data) {
             console.log('[charts] Chart data set successfully');
             console.log('[charts] Chart data range - first:', chartData[0]);
             console.log('[charts] Chart data range - last:', chartData[chartData.length - 1]);
+            console.log('[charts] Price range - min:', Math.min(...chartData.map(d => d.value)));
+            console.log('[charts] Price range - max:', Math.max(...chartData.map(d => d.value)));
             
             // Fit the chart to the data range
             tvChart.timeScale().fitContent();
+            
+            // Force a repaint to ensure visibility
+            setTimeout(() => {
+                if (tvChart && tvSeries) {
+                    console.log('[charts] Forcing chart repaint for visibility');
+                    tvChart.timeScale().fitContent();
+                }
+            }, 100);
             
         } catch (err) {
             console.error('[charts] Error setting chart data:', err);
@@ -197,11 +207,20 @@ function renderPriceChartWithVortex(data) {
     
     // Handle window resize for responsiveness
     const handleResize = () => {
-        if (tvChart) {
-            tvChart.applyOptions({
-                width: container.clientWidth,
-                height: container.clientHeight || 500
-            });
+        try {
+            if (tvChart && container && container.clientWidth > 0 && container.clientHeight > 0) {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight || 500;
+                
+                if (newWidth > 0 && newHeight > 0) {
+                    tvChart.applyOptions({
+                        width: newWidth,
+                        height: newHeight
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn('[charts] Resize handler error:', err);
         }
     };
     
