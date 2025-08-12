@@ -436,7 +436,30 @@ function updateTradesTable() {
         return;
     }
     
+    // Calculate average holding period for completed trades
+    const completedTrades = backtestResults.trades.filter(trade => 
+        trade.type === 'CLOSE' && trade.entryDate && trade.date
+    );
+    
+    let avgHoldingPeriod = 0;
+    if (completedTrades.length > 0) {
+        const totalHoldingDays = completedTrades.reduce((sum, trade) => {
+            const entryDate = new Date(trade.entryDate);
+            const exitDate = new Date(trade.date);
+            const holdingDays = Math.round((exitDate - entryDate) / (1000 * 60 * 60 * 24));
+            return sum + holdingDays;
+        }, 0);
+        avgHoldingPeriod = totalHoldingDays / completedTrades.length;
+    }
+    
     let html = `
+        <div class="trade-history-header">
+            <h3>Trade History</h3>
+            <div class="avg-holding-time">
+                <span class="metric-label">Average Held Position Time:</span>
+                <span class="metric-value">${avgHoldingPeriod.toFixed(1)} days</span>
+            </div>
+        </div>
         <table class="trades-table">
             <thead>
                 <tr>
@@ -444,6 +467,7 @@ function updateTradesTable() {
                     <th>Action</th>
                     <th>Price</th>
                     <th>Digital Root</th>
+                    <th>Portfolio</th>
                     <th>P&L</th>
                     <th>P&L %</th>
                 </tr>
@@ -459,12 +483,16 @@ function updateTradesTable() {
         const pnlClass = profitLoss >= 0 ? 'positive' : 'negative';
         const pnlPercent = profitLossPercent ? profitLossPercent.toFixed(2) : '-';
         
+        // Get portfolio value at this trade (use capital field from trade)
+        const portfolioValue = trade.capital || 0;
+        
         html += `
             <tr>
                 <td>${trade.date}</td>
                 <td><span class="trade-${trade.action.toLowerCase()}">${trade.action}</span></td>
                 <td>$${trade.price.toFixed(2)}</td>
                 <td>${trade.digitalRoot}</td>
+                <td class="portfolio-value">$${portfolioValue.toLocaleString()}</td>
                 <td class="${pnlClass}">$${profitLoss.toFixed(2)}</td>
                 <td class="${pnlClass}">${pnlPercent}%</td>
                 </tr>

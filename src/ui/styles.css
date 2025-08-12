@@ -479,9 +479,17 @@ header h1 {
 
 #tradingview-chart {
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible; /* Allow labels to extend above chart */
     background: #000;
     border: 1px solid rgba(0, 255, 136, 0.1);
+    position: relative;
+}
+
+/* Vortex label positioning */
+.vortex-label {
+    position: absolute !important;
+    z-index: 1000 !important;
+    pointer-events: none !important;
 }
 
 #chart-status {
@@ -575,6 +583,52 @@ header h1 {
 .trade-hold {
     color: #ffa502;
     font-weight: 600;
+}
+
+/* Trade History Header */
+.trade-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.trade-history-header h3 {
+    color: #00ff88;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.avg-holding-time {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.avg-holding-time .metric-label {
+    color: #c0c0c0;
+    font-size: 0.9rem;
+}
+
+.avg-holding-time .metric-value {
+    color: #00ff88;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 4px 8px;
+    background: rgba(0, 255, 136, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+/* Portfolio Column */
+.portfolio-value {
+    color: #00bcd4 !important;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 /* Analysis Tab */

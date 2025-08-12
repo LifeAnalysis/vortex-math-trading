@@ -225,6 +225,7 @@ function drawVortexLabels(container, chart, dataPoints) {
                 try {
                     const x = timeScale.timeToCoordinate(time);
                     const y = series.priceToCoordinate(price);
+                    console.log(`[charts] Coordinate conversion: time=${time}, price=${price}, x=${x}, y=${y}`);
                     return { x, y };
                 } catch (err) {
                     console.warn('[charts] Coordinate conversion failed:', err);
@@ -239,7 +240,10 @@ function drawVortexLabels(container, chart, dataPoints) {
             // Draw buy signals (1) as green circles with numbers
             buySignals.forEach(point => {
                 const { x, y } = coordinateToScreen(point.time, point.high || point.close);
-                if (x == null || y == null) return;
+                if (x == null || y == null || x < 0 || y < 0) return;
+
+                // Get container position for proper relative positioning
+                const containerRect = container.getBoundingClientRect();
 
                 const label = document.createElement('div');
                 label.className = 'vortex-label buy-signal';
@@ -251,7 +255,7 @@ function drawVortexLabels(container, chart, dataPoints) {
                 label.style.padding = '4px 8px';
                 label.style.fontSize = '12px';
                 label.style.fontWeight = 'bold';
-                label.style.borderRadius = '50%'; // Make it circular
+                label.style.borderRadius = '50%';
                 label.style.pointerEvents = 'none';
                 label.style.background = '#00ff88';
                 label.style.color = '#000';
@@ -271,7 +275,10 @@ function drawVortexLabels(container, chart, dataPoints) {
             // Draw sell signals (5) as red circles with numbers
             sellSignals.forEach(point => {
                 const { x, y } = coordinateToScreen(point.time, point.high || point.close);
-                if (x == null || y == null) return;
+                if (x == null || y == null || x < 0 || y < 0) return;
+
+                // Get container position for proper relative positioning
+                const containerRect = container.getBoundingClientRect();
 
                 const label = document.createElement('div');
                 label.className = 'vortex-label sell-signal';
@@ -283,7 +290,7 @@ function drawVortexLabels(container, chart, dataPoints) {
                 label.style.padding = '4px 8px';
                 label.style.fontSize = '12px';
                 label.style.fontWeight = 'bold';
-                label.style.borderRadius = '50%'; // Make it circular
+                label.style.borderRadius = '50%';
                 label.style.pointerEvents = 'none';
                 label.style.background = '#ff4757';
                 label.style.color = '#fff';
