@@ -21,8 +21,7 @@ const appState = {
         teslaFilter: true,
         sequenceFilter: true,
         positionSize: 1.0,
-        stopLoss: 10,
-        takeProfit: 20,
+
         feePercent: 0.10,
         slippageBps: 5
     },
@@ -54,8 +53,7 @@ function setupEventListeners() {
     document.getElementById('tesla-filter')?.addEventListener('change', updateConfigFromForm);
     document.getElementById('sequence-filter')?.addEventListener('change', updateConfigFromForm);
     document.getElementById('position-size')?.addEventListener('input', updateConfigFromForm);
-    document.getElementById('stop-loss')?.addEventListener('input', updateConfigFromForm);
-    document.getElementById('take-profit')?.addEventListener('input', updateConfigFromForm);
+
 
     
     // Action buttons
@@ -107,8 +105,7 @@ function updateConfigFromForm() {
         teslaFilter: document.getElementById('tesla-filter')?.checked || false,
         sequenceFilter: document.getElementById('sequence-filter')?.checked || false,
         positionSize: parseFloat(document.getElementById('position-size')?.value || 1.0),
-        stopLoss: parseFloat(document.getElementById('stop-loss')?.value || 10),
-        takeProfit: parseFloat(document.getElementById('take-profit')?.value || 20),
+
 
     };
 }
@@ -126,8 +123,7 @@ function resetConfig() {
     document.getElementById('tesla-filter').checked = true;
     document.getElementById('sequence-filter').checked = true;
     document.getElementById('position-size').value = 1.0;
-    document.getElementById('stop-loss').value = 10;
-    document.getElementById('take-profit').value = 20;
+
 
     
     updateConfigFromForm();
@@ -217,8 +213,7 @@ async function runBacktest() {
             useTeslaFilter: appState.config.teslaFilter,
             useSequenceFilter: appState.config.sequenceFilter,
             maxPositionSize: appState.config.positionSize,
-            stopLossPercent: appState.config.stopLoss,
-            takeProfitPercent: appState.config.takeProfit
+
         });
 
         console.log('[app] Running strategy on', processedData.dailyData.length, 'daily points');

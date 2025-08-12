@@ -29,9 +29,7 @@ class VortexStrategy {
             minimumHoldPeriod: 1,     // Minimum days to hold position
             maxPositionSize: 1.0,     // Maximum position as fraction of capital
             
-            // Risk management
-            stopLossPercent: 10,      // Stop loss percentage
-            takeProfitPercent: 20,    // Take profit percentage
+            // Position management
             positionSize: 1.0,        // Position size as fraction of capital
             
             // Trading costs

@@ -15,27 +15,8 @@
             <p class="subtitle">Mathematical Pattern Backtesting Tool</p>
         </header>
 
-        <!-- Strategy Information -->
-        <section class="strategy-info">
-            <h3>About this Strategy</h3>
-            <p>
-                This experimental system applies vortex mathematics to market prices:
-                it computes digital roots (mod 9) and uses the classic doubling cycle
-                (1→2→4→8→7→5) for sequencing. Default rules are: BUY on 1 (cycle start),
-                SELL on 5 (cycle peak), HOLD on 9 (balance). Optional Tesla 3-6-9 filter
-                biases entries/exits and the doubling sequence filter constrains signals
-                to the canonical cycle. Include realistic assumptions via fees and slippage.
-            </p>
-            <ul>
-                <li><strong>Digital Root:</strong> price reduced via modulo 9 arithmetic</li>
-                <li><strong>Doubling Sequence:</strong> 1 → 2 → 4 → 8 → 7 → 5</li>
-                <li><strong>Tesla Filter:</strong> 3 (buy bias), 6 (sell bias), 9 (hold)</li>
-                <li><strong>Risk:</strong> stop loss / take profit / position size</li>
-                <li><strong>Costs:</strong> per-side fees and slippage (bps)</li>
-            </ul>
-        </section>
-
-        <main>
+        <!-- Left Panel: Configuration and Strategy Info -->
+        <div class="left-panel">
             <!-- Backtesting Configuration -->
             <section class="config-section">
                 <h2>📊 Backtest Configuration</h2>
@@ -103,23 +84,14 @@
                         <input type="number" id="position-size" value="1.0" min="0.1" max="1.0" step="0.1">
                     </div>
 
-                    <div class="config-group">
-                        <label for="stop-loss">Stop Loss %</label>
-                        <input type="number" id="stop-loss" value="10" min="0" max="100" step="0.5">
-                    </div>
-
-                    <div class="config-group">
-                        <label for="take-profit">Take Profit %</label>
-                        <input type="number" id="take-profit" value="20" min="0" max="100" step="0.5">
-                    </div>
 
 
 
                     <div class="config-group">
                         <label for="date-range">Test Period:</label>
                         <div class="date-inputs">
-                            <input type="date" id="start-date" value="2020-01-01">
-                            <input type="date" id="end-date" value="2025-01-09">
+                            <input type="date" id="start-date" value="2018-01-01">
+                            <input type="date" id="end-date" value="2025-08-12">
                         </div>
                     </div>
                 </div>
@@ -128,10 +100,31 @@
                     <button id="run-backtest" class="btn-primary">🚀 Run Backtest</button>
                     <button id="reset-config" class="btn-secondary">🔄 Reset</button>
                 </div>
-
-
             </section>
 
+            <!-- Strategy Information -->
+            <section class="strategy-info">
+                <h3>About this Strategy</h3>
+                <p>
+                    This experimental system applies vortex mathematics to market prices:
+                    it computes digital roots (mod 9) and uses the classic doubling cycle
+                    (1→2→4→8→7→5) for sequencing. Default rules are: BUY on 1 (cycle start),
+                    SELL on 5 (cycle peak), HOLD on 9 (balance). Optional Tesla 3-6-9 filter
+                    biases entries/exits and the doubling sequence filter constrains signals
+                    to the canonical cycle. This is a pure signal-based strategy.
+                </p>
+                <ul>
+                    <li><strong>Digital Root:</strong> price reduced via modulo 9 arithmetic</li>
+                    <li><strong>Doubling Sequence:</strong> 1 → 2 → 4 → 8 → 7 → 5</li>
+                    <li><strong>Tesla Filter:</strong> 3 (buy bias), 6 (sell bias), 9 (hold)</li>
+                    <li><strong>Position Size:</strong> fraction of capital to deploy</li>
+                    <li><strong>Pure Signals:</strong> follows vortex math regardless of P&L</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- Right Panel: Results -->
+        <div class="right-panel">
             <!-- Results Section -->
             <section class="results-section" id="results-section" style="display: none;">
                 <h2>📈 Backtest Results</h2>
@@ -228,7 +221,7 @@
                     </div>
                 </div>
             </section>
-        </main>
+        </div>
     </div>
 
     <!-- App scripts (ordered) -->
