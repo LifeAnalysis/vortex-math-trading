@@ -56,8 +56,7 @@ function setupEventListeners() {
     document.getElementById('position-size')?.addEventListener('input', updateConfigFromForm);
     document.getElementById('stop-loss')?.addEventListener('input', updateConfigFromForm);
     document.getElementById('take-profit')?.addEventListener('input', updateConfigFromForm);
-    document.getElementById('fee-percent')?.addEventListener('input', updateConfigFromForm);
-    document.getElementById('slippage-bps')?.addEventListener('input', updateConfigFromForm);
+
     
     // Action buttons
     document.getElementById('run-backtest')?.addEventListener('click', runBacktest);
@@ -110,8 +109,7 @@ function updateConfigFromForm() {
         positionSize: parseFloat(document.getElementById('position-size')?.value || 1.0),
         stopLoss: parseFloat(document.getElementById('stop-loss')?.value || 10),
         takeProfit: parseFloat(document.getElementById('take-profit')?.value || 20),
-        feePercent: parseFloat(document.getElementById('fee-percent')?.value || 0.10),
-        slippageBps: parseInt(document.getElementById('slippage-bps')?.value || 5)
+
     };
 }
 
@@ -130,8 +128,7 @@ function resetConfig() {
     document.getElementById('position-size').value = 1.0;
     document.getElementById('stop-loss').value = 10;
     document.getElementById('take-profit').value = 20;
-    document.getElementById('fee-percent').value = 0.10;
-    document.getElementById('slippage-bps').value = 5;
+
     
     updateConfigFromForm();
     hideResults();

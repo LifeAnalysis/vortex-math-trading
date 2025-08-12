@@ -18,6 +18,9 @@ function renderPriceChartWithVortex(data) {
         console.error('[charts] LightweightCharts library not loaded');
         return;
     }
+    
+    console.log('[charts] LightweightCharts object:', LightweightCharts);
+    console.log('[charts] Available exports:', Object.keys(LightweightCharts));
 
     // Always recreate chart to avoid state issues
     if (tvChart) {
@@ -34,10 +37,24 @@ function renderPriceChartWithVortex(data) {
             height: 500
         });
         
-        console.log('[charts] Chart object created, adding candlestick series...');
-        tvSeries = tvChart.addCandlestickSeries();
+        console.log('[charts] Chart object created:', tvChart);
+        console.log('[charts] Available methods on chart:', Object.getOwnPropertyNames(tvChart));
         
-        console.log('[charts] Series created:', !!tvSeries);
+        // Try different API approaches for adding candlestick series
+        if (typeof tvChart.addCandlestickSeries === 'function') {
+            console.log('[charts] Using addCandlestickSeries method');
+            tvSeries = tvChart.addCandlestickSeries();
+        } else if (typeof tvChart.addSeries === 'function') {
+            console.log('[charts] Using addSeries method with CandlestickSeries');
+            tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries);
+        } else {
+            console.error('[charts] No suitable method found for adding candlestick series');
+            console.log('[charts] LightweightCharts object:', LightweightCharts);
+            return;
+        }
+        
+        console.log('[charts] Series created:', tvSeries);
+        console.log('[charts] Series type:', typeof tvSeries);
         if (!tvSeries) {
             console.error('[charts] Failed to create candlestick series');
             return;
