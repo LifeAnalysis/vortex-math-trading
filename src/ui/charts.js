@@ -64,9 +64,17 @@ function renderPriceChartWithVortex(data) {
                 secondsVisible: false
             },
             crosshair: {
-                mode: 1, // Normal crosshair mode (v4 compatible)
-                vertLine: { color: '#00ff88', width: 1, style: 2 }, // Dashed style
-                horzLine: { color: '#00ff88', width: 1, style: 2 }  // Dashed style
+                mode: LightweightCharts.CrosshairMode?.Normal || 1,
+                vertLine: { 
+                    color: '#00ff88', 
+                    width: 1, 
+                    style: LightweightCharts.LineStyle?.Dashed || 2 
+                },
+                horzLine: { 
+                    color: '#00ff88', 
+                    width: 1, 
+                    style: LightweightCharts.LineStyle?.Dashed || 2 
+                }
             },
             handleScroll: true,
             handleScale: true
@@ -80,10 +88,10 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Chart methods available:', Object.getOwnPropertyNames(tvChart));
         
         try {
-            // Simple approach - just create the line series with minimal options
-            console.log('[charts] Creating basic line series');
+            // Use official TradingView v5+ API syntax
+            console.log('[charts] Creating line series with official v5 API');
             
-            tvSeries = tvChart.addLineSeries({
+            tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
                 color: '#87CEEB',
                 lineWidth: 2,
                 priceLineVisible: true,
@@ -96,8 +104,8 @@ function renderPriceChartWithVortex(data) {
             console.error('[charts] Line series failed, trying area series:', lineError);
             
             try {
-                // Fallback to area series with minimal options
-                tvSeries = tvChart.addAreaSeries({
+                // Fallback to area series using v5 API
+                tvSeries = tvChart.addSeries(LightweightCharts.AreaSeries, {
                     lineColor: '#87CEEB',
                     topColor: 'rgba(135, 206, 235, 0.4)',
                     bottomColor: 'rgba(135, 206, 235, 0.0)',
@@ -110,8 +118,8 @@ function renderPriceChartWithVortex(data) {
                 console.error('[charts] Area series also failed, trying candlestick:', areaError);
                 
                 try {
-                    // Last fallback to candlestick with minimal options
-                    tvSeries = tvChart.addCandlestickSeries({
+                    // Last fallback to candlestick using v5 API
+                    tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
                         upColor: '#00ff88',
                         downColor: '#ff4757'
                     });
@@ -124,7 +132,7 @@ function renderPriceChartWithVortex(data) {
                     // Ultimate fallback - try the old working approach we had before
                     try {
                         console.log('[charts] Trying basic series creation without options');
-                        tvSeries = tvChart.addLineSeries();
+                        tvSeries = tvChart.addSeries(LightweightCharts.LineSeries);
                         if (tvSeries) {
                             console.log('[charts] Basic line series created successfully');
                         }
@@ -148,13 +156,13 @@ function renderPriceChartWithVortex(data) {
         return;
     }
 
-    // Map data to format compatible with different series types
+    // Map data to TradingView format - use timestamps in seconds as per documentation
     const chartData = data.map(d => ({
-        time: Math.floor(d.timestamp / 1000),
-        value: d.price,
+        time: Math.floor(d.timestamp / 1000), // Unix timestamp in seconds
+        value: d.price, // Price value as number
         digitalRoot: d.digitalRoot,
         date: d.date
-    })).filter(d => d.time && d.value && !isNaN(d.value));
+    })).filter(d => d.time && d.value && !isNaN(d.value) && d.time > 0);
 
     console.log('[charts] setting chart data', chartData.length);
     console.log('[charts] sample chart data:', chartData.slice(0, 3));
