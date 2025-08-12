@@ -33,6 +33,7 @@ const appState = {
  * Initialize the application
  */
 function initializeApp() {
+    console.log('[app] initializeApp');
     setupEventListeners();
     hideResults();
     updateConfigFromForm();
@@ -89,6 +90,8 @@ function showResults() {
     if (resultsSection) {
         resultsSection.style.display = 'block';
     }
+    // Render chart when showing results
+    tryRenderChart();
 }
 
 /**
@@ -164,7 +167,7 @@ function switchTab(tabName) {
  */
 async function loadHistoricalData() {
     try {
-        console.log('Loading historical BTC data from local JSON...');
+        console.log('[app] Loading historical BTC data from local JSON...');
         const res = await fetch('/src/data/btc-historical-data.json', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = await res.json();
@@ -174,7 +177,7 @@ async function loadHistoricalData() {
         if (!DP) throw new Error('DataProcessor not available on window');
         processedData = DP.processRawData(raw);
 
-        console.log(`Loaded ${processedData.metadata.totalRecords} BTC daily records`);
+        console.log('[app] Loaded records:', processedData.metadata.totalRecords);
         showNotification(`Loaded ${processedData.metadata.totalRecords} BTC daily records`, 'success');
     } catch (error) {
         console.error('Error loading historical data:', error);
@@ -186,86 +189,67 @@ async function loadHistoricalData() {
  * Run backtest with current configuration and TradingView chart
  */
 async function runBacktest() {
-    if (appState.isRunning) {
-        return;
-    }
-    
+    if (appState.isRunning) return;
     try {
         appState.isRunning = true;
-        
-        // Update button state
         const button = document.getElementById('run-backtest');
-        if (button) {
-            button.textContent = '⏳ Running...';
-            button.disabled = true;
-        }
-        
+        if (button) { button.textContent = '⏳ Running...'; button.disabled = true; }
         updateConfigFromForm();
+        console.log('[app] Running backtest with config:', appState.config);
         showNotification('Running vortex math backtest...', 'info');
-        
-        // Initialize TradingView chart if not already done
-        if (!tradingViewChart) {
-            tradingViewChart = new TradingViewChart('tradingview-chart');
+
+        if (!processedData) {
+            await loadHistoricalData();
         }
-        
-        // Load chart data with vortex math
-        const chartData = await tradingViewChart.loadDataAndDisplay({
-            startDate: appState.config.startDate,
-            endDate: appState.config.endDate,
+
+        const Strategy = window.VortexStrategy;
+        if (!Strategy) throw new Error('VortexStrategy not available on window');
+
+        const strategy = new Strategy({
             buySignal: appState.config.buySignal,
-            sellSignal: appState.config.sellSignal
+            sellSignal: appState.config.sellSignal,
+            holdSignal: appState.config.holdSignal,
+            useTeslaFilter: appState.config.teslaFilter,
+            useSequenceFilter: appState.config.sequenceFilter,
+            maxPositionSize: appState.config.positionSize,
+            stopLossPercent: appState.config.stopLoss,
+            takeProfitPercent: appState.config.takeProfit
         });
-        
-        // Generate trading signals from chart data
-        const tradingSignals = tradingViewChart.generateTradingSignals(
-            chartData.vortexData,
-            appState.config.buySignal,
-            appState.config.sellSignal
-        );
-        
-        // Calculate backtest performance
-        const performance = calculateBacktestPerformance(tradingSignals, appState.config.initialCapital);
-        
-            backtestResults = {
-            totalReturn: performance.totalReturn,
-            finalCapital: performance.finalCapital,
-                performance: {
-                totalTrades: tradingSignals.length,
-                winRate: performance.winRate,
-                maxDrawdown: performance.maxDrawdown,
-                sharpeRatio: performance.sharpeRatio
-            },
-            trades: tradingSignals,
-            config: {...appState.config},
-            chartData: chartData
-        };
-        
-        // Update UI with results
-        updateResultsDisplay();
+
+        console.log('[app] Running strategy on', processedData.dailyData.length, 'daily points');
+        backtestResults = strategy.backtest(processedData.dailyData, appState.config.initialCapital);
+        console.log('[app] Backtest done. Final capital:', backtestResults.finalCapital);
+
+        updatePerformanceMetrics();
         showResults();
-        
-        // Update chart status
-        document.getElementById('chart-status').textContent = `Chart loaded with ${chartData.candleData.length} candles. Each candle shows vortex math digital root (1-9).`;
-        
-        // Reset button
-        if (button) {
-            button.textContent = '🚀 Run Backtest';
-            button.disabled = false;
+
+        // Render chart with vortex labels
+        if (window.renderPriceChartWithVortex) {
+            const seriesData = processedData.dailyData.map(d => ({
+                timestamp: d.timestamp,
+                price: d.price,
+                digitalRoot: d.digitalRoot,
+                date: d.date
+            }));
+            console.log('[app] Rendering chart with points:', seriesData.length);
+            console.log('[app] Sample data points:', seriesData.slice(0, 3));
+            window.renderPriceChartWithVortex(seriesData);
+            const status = document.getElementById('chart-status');
+            if (status) status.textContent = `Chart loaded with ${seriesData.length} candles with vortex labels.`;
+        } else {
+            console.error('[app] renderPriceChartWithVortex function not available');
+            const status = document.getElementById('chart-status');
+            if (status) status.textContent = 'Chart rendering function not available';
         }
-        
+
+        if (button) { button.textContent = '🚀 Run Backtest'; button.disabled = false; }
         appState.isRunning = false;
         showNotification('Backtest completed successfully!', 'success');
-        
     } catch (error) {
         console.error('Error running backtest:', error);
         showNotification('Error running backtest. Please check console for details.', 'error');
-        
-        // Reset button on error
         const button = document.getElementById('run-backtest');
-        if (button) {
-            button.textContent = '🚀 Run Backtest';
-            button.disabled = false;
-        }
+        if (button) { button.textContent = '🚀 Run Backtest'; button.disabled = false; }
         appState.isRunning = false;
     }
 }
@@ -335,9 +319,57 @@ function updatePerformanceMetrics() {
         totalReturnElement.classList.remove('positive');
     }
     
-    // Update tab content
-    updateTradesTable();
-    updateAnalysisTab();
+            // Update tab content
+        updateTradesTable();
+        updateAnalysisTab();
+        
+        // Calculate average trade return for performance summary
+        if (backtestResults.trades && backtestResults.trades.length > 0) {
+            const avgTradeReturn = backtestResults.trades
+                .filter(t => t.profit !== undefined)
+                .reduce((sum, t) => sum + (t.profitPercent || 0), 0) / backtestResults.trades.length;
+            backtestResults.performance.averageTradeReturn = avgTradeReturn;
+        }
+        
+        tryRenderChart();
+}
+
+/**
+ * Try to render chart with vortex labels using Lightweight Charts
+ */
+function tryRenderChart() {
+    try {
+        console.log('[app] tryRenderChart called');
+        if (!processedData) {
+            console.log('[app] No processed data available for chart');
+            return;
+        }
+        if (!window.renderPriceChartWithVortex) {
+            console.log('[app] renderPriceChartWithVortex function not available');
+            return;
+        }
+        if (!window.LightweightCharts) {
+            console.error('[app] LightweightCharts library not loaded');
+            return;
+        }
+        
+        // Build minimal OHLC-like array from processed data
+        const seriesData = processedData.dailyData.map(d => ({
+            timestamp: d.timestamp,
+            price: d.price,
+            digitalRoot: d.digitalRoot,
+            date: d.date
+        }));
+        
+        console.log('[app] tryRenderChart with data points:', seriesData.length);
+        window.renderPriceChartWithVortex(seriesData);
+        const status = document.getElementById('chart-status');
+        if (status) status.textContent = `Chart rendered with ${seriesData.length} data points and vortex labels`;
+    } catch (err) {
+        console.error('Chart render error:', err);
+        const status = document.getElementById('chart-status');
+        if (status) status.textContent = `Chart error: ${err.message}`;
+    }
 }
 
 /**
@@ -367,8 +399,12 @@ function updateTradesTable() {
     `;
     
     backtestResults.trades.forEach(trade => {
-        const pnlClass = trade.profitLoss >= 0 ? 'positive' : 'negative';
-        const pnlPercent = trade.profitLossPercent ? trade.profitLossPercent.toFixed(2) : '-';
+        // Handle different trade object structures
+        const profitLoss = trade.profit !== undefined ? trade.profit : (trade.profitLoss || 0);
+        const profitLossPercent = trade.profitPercent !== undefined ? trade.profitPercent : (trade.profitLossPercent || 0);
+        
+        const pnlClass = profitLoss >= 0 ? 'positive' : 'negative';
+        const pnlPercent = profitLossPercent ? profitLossPercent.toFixed(2) : '-';
         
         html += `
             <tr>
@@ -376,7 +412,7 @@ function updateTradesTable() {
                 <td><span class="trade-${trade.action.toLowerCase()}">${trade.action}</span></td>
                 <td>$${trade.price.toFixed(2)}</td>
                 <td>${trade.digitalRoot}</td>
-                <td class="${pnlClass}">$${trade.profitLoss.toFixed(2)}</td>
+                <td class="${pnlClass}">$${profitLoss.toFixed(2)}</td>
                 <td class="${pnlClass}">${pnlPercent}%</td>
                 </tr>
         `;

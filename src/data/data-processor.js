@@ -3,8 +3,9 @@
  * Handles historical cryptocurrency data and prepares it for vortex analysis
  */
 
-// Support both Node.js and browser environments without redeclaring globals
-const VM = (typeof module !== 'undefined' && module.exports)
+// Support both Node.js and browser environments without polluting globals
+// Use a file-local alias name that won't collide
+const VMDP = (typeof module !== 'undefined' && module.exports)
     ? require('../core/vortex-math.js')
     : (typeof window !== 'undefined' ? window.VortexMath : null);
 
@@ -47,7 +48,7 @@ class DataProcessor {
         // Process each price point
         rawData.prices.forEach(([timestamp, price], index) => {
             const date = new Date(timestamp);
-            const digitalRoot = VM.digitalRoot(Math.round(price));
+            const digitalRoot = VMDP.digitalRoot(Math.round(price));
             
             const dataPoint = {
                 date: date.toISOString().split('T')[0], // YYYY-MM-DD format
@@ -56,8 +57,8 @@ class DataProcessor {
                 priceRounded: Math.round(price),
                 digitalRoot: digitalRoot,
                 vortexSequencePosition: this.getSequencePosition(digitalRoot),
-                isDoublingSequence: VM.isInDoublingSequence(digitalRoot),
-                isTeslaNumber: VM.isTeslaNumber(digitalRoot),
+                isDoublingSequence: VMDP.isInDoublingSequence(digitalRoot),
+                isTeslaNumber: VMDP.isTeslaNumber(digitalRoot),
                 // Calculate price change if not first record
                 priceChange: index > 0 ? price - rawData.prices[index - 1][1] : 0,
                 priceChangePercent: index > 0 ? ((price - rawData.prices[index - 1][1]) / rawData.prices[index - 1][1]) * 100 : 0

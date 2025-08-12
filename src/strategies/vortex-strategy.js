@@ -3,10 +3,16 @@
  * Applies vortex mathematics principles to generate trading signals
  */
 
-// Support both Node.js and browser environments without redeclaring globals
-const VM = (typeof module !== 'undefined' && module.exports)
-    ? require('../core/vortex-math.js')
-    : (typeof window !== 'undefined' ? window.VortexMath : null);
+// Support both Node.js and browser environments; avoid const re-declare in browser
+var VM = null;
+if (typeof module !== 'undefined' && module.exports) {
+    VM = require('../core/vortex-math.js');
+} else if (typeof window !== 'undefined') {
+    // Avoid redefining if already set by a previous script include
+    if (window.VortexMath && !VM) {
+        VM = window.VortexMath;
+    }
+}
 
 class VortexStrategy {
     
