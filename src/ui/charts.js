@@ -38,8 +38,9 @@ function renderPriceChartWithVortex(data) {
     console.log('[charts] Creating new chart');
     try {
         tvChart = LightweightCharts.createChart(container, {
-            width: container.clientWidth,
-            height: 500,
+            width: container.clientWidth || 800,
+            height: container.clientHeight || 400,
+            autoSize: true,
             layout: {
                 background: { type: 'solid', color: '#000000' },
                 textColor: '#e0e0e0',
@@ -63,9 +64,9 @@ function renderPriceChartWithVortex(data) {
                 secondsVisible: false
             },
             crosshair: {
-                mode: 1, // Normal crosshair mode
-                vertLine: { color: '#00ff88', width: 1, style: 2 },
-                horzLine: { color: '#00ff88', width: 1, style: 2 }
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#00ff88', width: 1, style: LightweightCharts.LineStyle.Dashed },
+                horzLine: { color: '#00ff88', width: 1, style: LightweightCharts.LineStyle.Dashed }
             },
             handleScroll: true,
             handleScale: true
@@ -75,27 +76,40 @@ function renderPriceChartWithVortex(data) {
         console.log('[charts] Available methods on chart:', Object.getOwnPropertyNames(tvChart));
         
         // Use line series for clean, continuous visualization
-        if (typeof tvChart.addLineSeries === 'function') {
-            console.log('[charts] Using addLineSeries method');
-            tvSeries = tvChart.addLineSeries({
-                color: '#87CEEB', // Light blue color
-                lineWidth: 2,
-                priceLineVisible: true,
-                lastValueVisible: true,
-                crosshairMarkerVisible: true,
-                crosshairMarkerRadius: 4,
-                crosshairMarkerBorderColor: '#87CEEB',
-                crosshairMarkerBackgroundColor: '#87CEEB'
-            });
-        } else if (typeof tvChart.addSeries === 'function') {
-            console.log('[charts] Using addSeries method with LineSeries');
-            tvSeries = tvChart.addSeries(LightweightCharts.LineSeries, {
-                color: '#87CEEB', // Light blue color
-                lineWidth: 2
-            });
-        } else {
-            console.error('[charts] No suitable method found for adding line series');
-            console.log('[charts] LightweightCharts object:', LightweightCharts);
+        try {
+            if (typeof tvChart.addLineSeries === 'function') {
+                console.log('[charts] Using addLineSeries method');
+                tvSeries = tvChart.addLineSeries({
+                    color: '#00ff88',
+                    lineWidth: 2,
+                    lineStyle: LightweightCharts.LineStyle.Solid,
+                    crosshairMarkerVisible: true,
+                    crosshairMarkerRadius: 4,
+                    crosshairMarkerBorderColor: '#00ff88',
+                    crosshairMarkerBackgroundColor: '#00ff88',
+                    lastValueVisible: true,
+                    priceLineVisible: true,
+                    title: 'BTC Price'
+                });
+            } else if (typeof tvChart.addAreaSeries === 'function') {
+                console.log('[charts] Using addAreaSeries as fallback');
+                tvSeries = tvChart.addAreaSeries({
+                    lineColor: '#00ff88',
+                    topColor: 'rgba(0, 255, 136, 0.4)',
+                    bottomColor: 'rgba(0, 255, 136, 0.0)',
+                    lineWidth: 2,
+                    crosshairMarkerVisible: true,
+                    lastValueVisible: true,
+                    priceLineVisible: true,
+                    title: 'BTC Price'
+                });
+            } else {
+                console.error('[charts] No suitable method found for adding series');
+                console.log('[charts] Available methods:', Object.getOwnPropertyNames(tvChart));
+                return;
+            }
+        } catch (seriesError) {
+            console.error('[charts] Error creating series:', seriesError);
             return;
         }
         
@@ -146,6 +160,26 @@ function renderPriceChartWithVortex(data) {
     
     // Add trade signals if available
     addTradeSignals(tvChart, tvSeries, lineData);
+    
+    // Handle window resize for responsiveness
+    const handleResize = () => {
+        if (tvChart) {
+            tvChart.applyOptions({
+                width: container.clientWidth,
+                height: container.clientHeight || 500
+            });
+        }
+    };
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    // Store cleanup function for resize listener
+    const existingCleanup = container._cleanupLabels;
+    container._cleanupLabels = () => {
+        if (existingCleanup) existingCleanup();
+        window.removeEventListener('resize', handleResize);
+    };
 }
 
 function addTradeSignals(chart, series, dataPoints) {
