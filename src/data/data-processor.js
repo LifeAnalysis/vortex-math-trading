@@ -28,25 +28,38 @@ class DataProcessor {
     
     /**
      * Process raw CoinGecko data into vortex-ready format
-     * @param {Object} rawData - Raw CoinGecko data with metadata and prices
+     * @param {Object} rawData - Raw CoinGecko data with metadata and prices/data
      * @returns {Object} Processed data with timestamps, prices, and vortex calculations
      */
     static processRawData(rawData) {
-        if (!rawData.prices || !Array.isArray(rawData.prices)) {
-            throw new Error('Invalid data format: prices array not found');
+        // Support both old format (prices array) and new format (data array)
+        const dataArray = rawData.prices || rawData.data;
+        if (!dataArray || !Array.isArray(dataArray)) {
+            throw new Error('Invalid data format: prices or data array not found');
         }
         
         const processedData = {
             metadata: {
                 ...rawData.metadata,
                 processedAt: new Date().toISOString(),
-                totalRecords: rawData.prices.length
+                totalRecords: dataArray.length
             },
             dailyData: []
         };
         
-        // Process each price point
-        rawData.prices.forEach(([timestamp, price], index) => {
+        // Process each price point - handle both old and new formats
+        dataArray.forEach((item, index) => {
+            let timestamp, price;
+            
+            if (Array.isArray(item)) {
+                // Old format: [timestamp, price]
+                [timestamp, price] = item;
+            } else {
+                // New format: {timestamp, price, date}
+                timestamp = item.timestamp * 1000; // Convert seconds to milliseconds
+                price = item.price;
+            }
+            
             const date = new Date(timestamp);
             const digitalRoot = VMDP.digitalRoot(Math.round(price));
             
@@ -69,6 +82,9 @@ class DataProcessor {
         
         // Add statistical summary
         processedData.statistics = this.calculateStatistics(processedData.dailyData);
+        
+        // Add timeSeries property for backward compatibility
+        processedData.timeSeries = processedData.dailyData;
         
         return processedData;
     }
