@@ -317,6 +317,13 @@ class VortexStrategy {
         const returnStdDev = dailyReturns.length > 0 ? Math.sqrt(dailyReturns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / dailyReturns.length) : 0;
         const sharpeRatio = returnStdDev > 0 ? (avgReturn / returnStdDev) * Math.sqrt(252) : 0; // Annualized
         
+        // Sortino ratio - only penalize downside volatility
+        const mar = 0; // Minimum acceptable return (0% per period)
+        const downsideReturns = dailyReturns.filter(ret => ret < mar);
+        const downsideDeviation = downsideReturns.length > 0 ? 
+            Math.sqrt(downsideReturns.reduce((sum, ret) => sum + Math.pow(ret - mar, 2), 0) / downsideReturns.length) : 0;
+        const sortinoRatio = downsideDeviation > 0 ? (avgReturn / downsideDeviation) * Math.sqrt(252) : 0; // Annualized
+        
         // Trade analysis
         const avgWin = winningTrades > 0 ? trades.filter(t => t.profit > 0).reduce((sum, t) => sum + t.profitPercent, 0) / winningTrades : 0;
         const avgLoss = losingTrades > 0 ? trades.filter(t => t.profit < 0).reduce((sum, t) => sum + Math.abs(t.profitPercent), 0) / losingTrades : 0;
@@ -330,6 +337,7 @@ class VortexStrategy {
             winRate: winRate,
             maxDrawdown: maxDrawdown,
             sharpeRatio: sharpeRatio,
+            sortinoRatio: sortinoRatio,
             avgWin: avgWin,
             avgLoss: avgLoss,
             profitFactor: profitFactor,

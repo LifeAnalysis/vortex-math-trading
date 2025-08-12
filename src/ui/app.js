@@ -334,6 +334,7 @@ function updatePerformanceMetrics() {
     document.getElementById('total-trades').textContent = backtestResults.performance.totalTrades;
     document.getElementById('max-drawdown').textContent = `${backtestResults.performance.maxDrawdown.toFixed(2)}%`;
     document.getElementById('sharpe-ratio').textContent = backtestResults.performance.sharpeRatio.toFixed(2);
+    document.getElementById('sortino-ratio').textContent = backtestResults.performance.sortinoRatio.toFixed(2);
     document.getElementById('final-capital').textContent = `$${backtestResults.finalCapital.toLocaleString()}`;
     
     // Update buy and hold comparison if available

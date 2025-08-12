@@ -281,6 +281,25 @@ describe('VortexStrategy', () => {
             expect(performance.maxDrawdown).toBe(25);
         });
         
+        it('should calculate Sortino ratio correctly', () => {
+            const mockResults = {
+                dailyPortfolio: [
+                    { portfolioValue: 10000 },
+                    { portfolioValue: 11000 }, // +10% return
+                    { portfolioValue: 10500 }, // -4.5% return
+                    { portfolioValue: 12000 }  // +14.3% return
+                ]
+            };
+            
+            const performance = strategy.calculatePerformanceMetrics(mockResults, 10000, 12000);
+            
+            // Sortino should be calculated (only penalizes downside volatility)
+            expect(performance.sortinoRatio).toBeDefined();
+            expect(typeof performance.sortinoRatio).toBe('number');
+            // Should be higher than Sharpe since it only penalizes negative returns
+            expect(performance.sortinoRatio).toBeGreaterThanOrEqual(performance.sharpeRatio);
+        });
+        
         it('should handle empty trade history', () => {
             strategy.tradeHistory = [];
             
