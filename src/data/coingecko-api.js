@@ -60,6 +60,28 @@ class CoinGeckoAPI {
     }
 
     /**
+     * Fetch OHLC data suitable for candlestick charts
+     * API: /coins/{id}/ohlc?vs_currency=usd&days=xx
+     * @param {string} coinId
+     * @param {string} vsCurrency
+     * @param {number|string} days - 1, 7, 14, 30, 90, 180, 365, max
+     * @returns {Promise<Array<{time:number, open:number, high:number, low:number, close:number}>>}
+     */
+    async getOHLC(coinId = 'bitcoin', vsCurrency = 'usd', days = 365) {
+        try {
+            const url = `${this.baseURL}/coins/${coinId}/ohlc?vs_currency=${vsCurrency}&days=${days}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            // Format: [[timestamp, open, high, low, close], ...]
+            return data.map(([ts, o, h, l, c]) => ({ time: Math.floor(ts / 1000), open: o, high: h, low: l, close: c }));
+        } catch (err) {
+            console.error('Error fetching OHLC:', err);
+            return [];
+        }
+    }
+
+    /**
      * Process raw market data from CoinGecko API
      * @param {Object} rawData - Raw API response
      * @returns {Object} Processed data ready for analysis

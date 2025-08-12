@@ -6,6 +6,7 @@
 // Application data
 let processedData = null;
 let backtestResults = null;
+let tradingViewChart = null;
 
 // Application state
 const appState = {
@@ -182,50 +183,132 @@ async function loadHistoricalData() {
 }
 
 /**
- * Run backtest with current strategy configuration
+ * Run backtest with current configuration and TradingView chart
  */
 async function runBacktest() {
-    if (!processedData) {
-        showNotification('Please load historical data first', 'warning');
+    if (appState.isRunning) {
         return;
     }
     
     try {
         appState.isRunning = true;
+        
+        // Update button state
+        const button = document.getElementById('run-backtest');
+        if (button) {
+            button.textContent = '⏳ Running...';
+            button.disabled = true;
+        }
+        
+        updateConfigFromForm();
         showNotification('Running vortex math backtest...', 'info');
         
-        // Execute backtest using browser-global VortexStrategy
-        const Strategy = window.VortexStrategy;
-        if (!Strategy) throw new Error('VortexStrategy not available on window');
+        // Initialize TradingView chart if not already done
+        if (!tradingViewChart) {
+            tradingViewChart = new TradingViewChart('tradingview-chart');
+        }
         
-        const strategy = new Strategy({
+        // Load chart data with vortex math
+        const chartData = await tradingViewChart.loadDataAndDisplay({
+            startDate: appState.config.startDate,
+            endDate: appState.config.endDate,
             buySignal: appState.config.buySignal,
-            sellSignal: appState.config.sellSignal,
-            holdSignal: appState.config.holdSignal,
-            useTeslaFilter: appState.config.teslaFilter,
-            useSequenceFilter: appState.config.sequenceFilter,
-            positionSize: appState.config.positionSize,
-            stopLoss: appState.config.stopLoss,
-            takeProfit: appState.config.takeProfit,
-            feePercent: appState.config.feePercent,
-            slippageBps: appState.config.slippageBps
+            sellSignal: appState.config.sellSignal
         });
-
-        backtestResults = strategy.backtest(processedData.dailyData, appState.config.initialCapital);
-        appState.isRunning = false;
         
-        // Update performance metrics in UI
-        updatePerformanceMetrics();
+        // Generate trading signals from chart data
+        const tradingSignals = tradingViewChart.generateTradingSignals(
+            chartData.vortexData,
+            appState.config.buySignal,
+            appState.config.sellSignal
+        );
         
-        // Show results section
+        // Calculate backtest performance
+        const performance = calculateBacktestPerformance(tradingSignals, appState.config.initialCapital);
+        
+            backtestResults = {
+            totalReturn: performance.totalReturn,
+            finalCapital: performance.finalCapital,
+                performance: {
+                totalTrades: tradingSignals.length,
+                winRate: performance.winRate,
+                maxDrawdown: performance.maxDrawdown,
+                sharpeRatio: performance.sharpeRatio
+            },
+            trades: tradingSignals,
+            config: {...appState.config},
+            chartData: chartData
+        };
+        
+        // Update UI with results
+        updateResultsDisplay();
         showResults();
+        
+        // Update chart status
+        document.getElementById('chart-status').textContent = `Chart loaded with ${chartData.candleData.length} candles. Each candle shows vortex math digital root (1-9).`;
+        
+        // Reset button
+        if (button) {
+            button.textContent = '🚀 Run Backtest';
+            button.disabled = false;
+        }
+        
+        appState.isRunning = false;
         showNotification('Backtest completed successfully!', 'success');
         
     } catch (error) {
         console.error('Error running backtest:', error);
         showNotification('Error running backtest. Please check console for details.', 'error');
+        
+        // Reset button on error
+        const button = document.getElementById('run-backtest');
+        if (button) {
+            button.textContent = '🚀 Run Backtest';
+            button.disabled = false;
+        }
         appState.isRunning = false;
     }
+}
+
+/**
+ * Calculate backtest performance from trading signals
+ */
+function calculateBacktestPerformance(signals, initialCapital) {
+    let capital = initialCapital;
+    let maxCapital = initialCapital;
+    let minCapital = initialCapital;
+    let winningTrades = 0;
+    let totalTrades = 0;
+    
+    signals.forEach(signal => {
+        if (signal.pnl !== 0) {
+            totalTrades++;
+            capital += signal.pnl;
+            
+            if (signal.pnl > 0) {
+                winningTrades++;
+            }
+            
+            maxCapital = Math.max(maxCapital, capital);
+            minCapital = Math.min(minCapital, capital);
+        }
+    });
+    
+    const totalReturn = ((capital - initialCapital) / initialCapital) * 100;
+    const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+    const maxDrawdown = ((maxCapital - minCapital) / maxCapital) * 100;
+    
+    // Simple Sharpe ratio calculation (assuming risk-free rate of 2%)
+    const avgReturn = totalReturn / (signals.length > 0 ? signals.length : 1);
+    const sharpeRatio = avgReturn / Math.max(Math.sqrt(maxDrawdown), 1);
+    
+    return {
+        totalReturn,
+        finalCapital: capital,
+        winRate,
+        maxDrawdown,
+        sharpeRatio: Math.max(-2, Math.min(3, sharpeRatio)) // Cap between -2 and 3
+    };
 }
 
 /**
@@ -295,7 +378,7 @@ function updateTradesTable() {
                 <td>${trade.digitalRoot}</td>
                 <td class="${pnlClass}">$${trade.profitLoss.toFixed(2)}</td>
                 <td class="${pnlClass}">${pnlPercent}%</td>
-            </tr>
+                </tr>
         `;
     });
     

@@ -16,7 +16,10 @@ Creating a comprehensive vortex math trading backtesting system with advanced ma
 - **Critical Analysis**: Include mathematical critiques and limitations
 
 ## Lessons Learned
-*No lessons learned yet - project just started*
+- [2024-01-XX] Always ensure JavaScript event listeners match HTML element IDs exactly (kebab-case vs camelCase mismatch caused broken functionality)
+- [2024-01-XX] When simplifying UI, maintain script inclusion consistency (missing tradingview-app.js script caused functionality gaps)
+- [2024-01-XX] User-driven HTML improvements require corresponding JavaScript updates to maintain functionality
+- [2024-01-XX] CDN dependencies are more reliable than local script files for external libraries like TradingView
 
 ## Notes
 - Focus on mathematical rigor while acknowledging vortex math limitations
