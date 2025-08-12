@@ -1,237 +1,303 @@
 /**
- * TradingView Data Formatter
- * Converts BTC historical data to TradingView Lightweight Charts format
- * and adds vortex math overlays
+ * TradingView Chart Integration for Vortex Math Trading System
  */
 
-// Support both Node.js and browser environments
-const VM = (typeof module !== 'undefined' && module.exports)
-    ? require('../core/vortex-math.js')
-    : (typeof window !== 'undefined' ? window.VortexMath : null);
+class TradingViewChart {
+    constructor(containerId) {
+        this.containerId = containerId;
+        this.chart = null;
+        this.candlestickSeries = null;
+        this.vortexSeries = null;
+        this.signalMarkers = [];
+    }
 
-class TradingViewDataFormatter {
-    
-    /**
-     * Convert historical price data to TradingView candlestick format
-     * @param {Array} priceData - Array of [timestamp, price] from CoinGecko
-     * @returns {Object} Formatted data for TradingView
-     */
-    static formatForTradingView(priceData) {
-        if (!Array.isArray(priceData) || priceData.length === 0) {
-            throw new Error('Invalid price data provided');
+    async init() {
+        if (typeof LightweightCharts === 'undefined') {
+            throw new Error('TradingView Lightweight Charts library not loaded');
         }
 
-        const candlestickData = [];
-        const vortexOverlayData = [];
-        
-        // Since we have daily close prices, we'll create simple candlesticks
-        // with close = high = low = open for daily data
-        priceData.forEach(([timestamp, price], index) => {
-            const time = Math.floor(timestamp / 1000); // Convert to seconds for TradingView
-            
-            // Calculate digital root for vortex math
-            const digitalRoot = VM ? VM.digitalRoot(Math.round(price)) : Math.round(price) % 9 || 9;
-            
-            // Create candlestick data point
-            const candlestick = {
-                time: time,
-                open: price,
-                high: price,
-                low: price,
-                close: price
-            };
-            
-            // Create vortex overlay data point
-            const vortexPoint = {
-                time: time,
-                value: digitalRoot,
-                color: this.getVortexColor(digitalRoot),
-                text: digitalRoot.toString()
-            };
-            
-            candlestickData.push(candlestick);
-            vortexOverlayData.push(vortexPoint);
+        const container = document.getElementById(this.containerId);
+        if (!container) {
+            throw new Error(`Container with id '${this.containerId}' not found`);
+        }
+
+        this.chart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 400,
+            layout: {
+                backgroundColor: '#ffffff',
+                textColor: '#333',
+            },
+            grid: {
+                vertLines: { color: '#f0f0f0' },
+                horzLines: { color: '#f0f0f0' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#cccccc',
+            },
+            timeScale: {
+                borderColor: '#cccccc',
+                timeVisible: true,
+                secondsVisible: false,
+            },
         });
+
+        this.candlestickSeries = this.chart.addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+        });
+
+        this.setupResponsiveChart();
+        return this.chart;
+    }
+
+    setupResponsiveChart() {
+        const resizeObserver = new ResizeObserver(entries => {
+            if (this.chart && entries.length > 0) {
+                const { width } = entries[0].contentRect;
+                this.chart.applyOptions({ width: Math.max(width, 300) });
+            }
+        });
+
+        const container = document.getElementById(this.containerId);
+        if (container) {
+            resizeObserver.observe(container);
+        }
+    }
+
+    calculateVortexMath(price) {
+        const priceInt = Math.floor(price * 100);
+        
+        let sumOfDigits = 0;
+        let temp = priceInt;
+        while (temp > 0) {
+            sumOfDigits += temp % 10;
+            temp = Math.floor(temp / 10);
+        }
+
+        let digitalRoot = sumOfDigits;
+        while (digitalRoot >= 10) {
+            let newSum = 0;
+            while (digitalRoot > 0) {
+                newSum += digitalRoot % 10;
+                digitalRoot = Math.floor(digitalRoot / 10);
+            }
+            digitalRoot = newSum;
+        }
+
+        if (digitalRoot === 0) digitalRoot = 9;
+
+        const doublingSequence = [1, 2, 4, 8, 7, 5];
+        const isDoublingSequence = doublingSequence.includes(digitalRoot);
+
+        const teslaNumbers = [3, 6, 9];
+        const isTeslaNumber = teslaNumbers.includes(digitalRoot);
 
         return {
-            candlestickData,
-            vortexOverlayData,
-            metadata: {
-                symbol: 'BTC/USD',
-                timeframe: 'D',
-                totalPoints: candlestickData.length,
-                dateRange: {
-                    start: new Date(priceData[0][0]).toISOString(),
-                    end: new Date(priceData[priceData.length - 1][0]).toISOString()
-                }
-            }
+            digitalRoot,
+            sumOfDigits,
+            isDoublingSequence,
+            isTeslaNumber
         };
     }
 
-    /**
-     * Create OHLC data from single price points (for better visualization)
-     * @param {Array} priceData - Array of [timestamp, price]
-     * @param {number} volatilityFactor - Factor to create artificial OHLC spread
-     * @returns {Array} OHLC formatted data
-     */
-    static createOHLCFromPrices(priceData, volatilityFactor = 0.02) {
-        return priceData.map(([timestamp, price], index) => {
-            const time = Math.floor(timestamp / 1000);
-            
-            // Create artificial OHLC based on price with small volatility
-            const spread = price * volatilityFactor;
-            const variation = Math.random() - 0.5; // -0.5 to 0.5
-            
-            // Calculate previous price for trend direction
-            const prevPrice = index > 0 ? priceData[index - 1][1] : price;
-            const isUpTrend = price >= prevPrice;
-            
-            const open = prevPrice;
-            const close = price;
-            const high = Math.max(open, close) + Math.abs(variation * spread);
-            const low = Math.min(open, close) - Math.abs(variation * spread);
+    generateMockData(startDate = '2020-01-01', endDate = '2023-12-31', initialPrice = 7000) {
+        const data = [];
+        const vortexData = [];
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        let currentPrice = initialPrice;
+        let currentDate = new Date(start);
 
-            return {
-                time: time,
-                open: parseFloat(open.toFixed(2)),
-                high: parseFloat(high.toFixed(2)),
-                low: parseFloat(low.toFixed(2)),
-                close: parseFloat(close.toFixed(2))
-            };
-        });
+        while (currentDate <= end) {
+            const volatility = 0.02 + Math.random() * 0.03;
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            const change = currentPrice * volatility * direction * (0.5 + Math.random() * 0.5);
+            
+            const open = currentPrice;
+            const close = Math.max(1000, currentPrice + change);
+            const high = Math.max(open, close) * (1 + Math.random() * 0.02);
+            const low = Math.min(open, close) * (1 - Math.random() * 0.02);
+
+            const vortexMath = this.calculateVortexMath(close);
+            const timestamp = Math.floor(currentDate.getTime() / 1000);
+            
+            data.push({
+                time: timestamp,
+                open: Math.round(open * 100) / 100,
+                high: Math.round(high * 100) / 100,
+                low: Math.round(low * 100) / 100,
+                close: Math.round(close * 100) / 100,
+                vortexRoot: vortexMath.digitalRoot
+            });
+
+            vortexData.push({
+                time: timestamp,
+                value: vortexMath.digitalRoot,
+                price: close,
+                digitalRoot: vortexMath.digitalRoot,
+                isDoublingSequence: vortexMath.isDoublingSequence,
+                isTeslaNumber: vortexMath.isTeslaNumber
+            });
+
+            currentPrice = close;
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return { candleData: data, vortexData: vortexData };
     }
 
-    /**
-     * Get color for vortex number based on its significance
-     * @param {number} digitalRoot - Digital root (1-9)
-     * @returns {string} Color code
-     */
-    static getVortexColor(digitalRoot) {
-        const colors = {
-            1: '#00FF00', // Green - Start of cycle
-            2: '#32CD32', // Lime green
-            3: '#FFD700', // Gold - Tesla number
-            4: '#FFA500', // Orange
-            5: '#FF4500', // Red orange - End of cycle
-            6: '#FF69B4', // Hot pink - Tesla number
-            7: '#8A2BE2', // Blue violet
-            8: '#4169E1', // Royal blue
-            9: '#FF0000'  // Red - Tesla number, balance point
-        };
-        return colors[digitalRoot] || '#FFFFFF';
+    async loadDataAndDisplay(config = {}) {
+        if (!this.chart) {
+            await this.init();
+        }
+
+        const {
+            startDate = '2020-01-01',
+            endDate = '2023-12-31',
+            buySignal = 1,
+            sellSignal = 5
+        } = config;
+
+        const { candleData, vortexData } = this.generateMockData(startDate, endDate);
+        
+        this.candlestickSeries.setData(candleData);
+        this.addVortexOverlay(vortexData, buySignal, sellSignal);
+        this.chart.timeScale().fitContent();
+
+        return { candleData, vortexData };
     }
 
-    /**
-     * Create vortex math markers for chart
-     * @param {Array} vortexData - Vortex overlay data points
-     * @returns {Array} Marker data for TradingView
-     */
-    static createVortexMarkers(vortexData) {
-        return vortexData.map(point => ({
-            time: point.time,
-            position: 'aboveBar',
-            color: point.color,
-            shape: 'circle',
-            text: point.text,
-            size: 1
-        }));
-    }
-
-    /**
-     * Create buy/sell signal markers based on vortex strategy
-     * @param {Array} candlestickData - Candlestick data
-     * @param {number} buySignal - Digital root for buy signal (default: 1)
-     * @param {number} sellSignal - Digital root for sell signal (default: 5)
-     * @returns {Array} Signal markers
-     */
-    static createSignalMarkers(candlestickData, buySignal = 1, sellSignal = 5) {
+    addVortexOverlay(vortexData, buySignal, sellSignal) {
         const markers = [];
         
-        candlestickData.forEach(candle => {
-            const digitalRoot = VM ? VM.digitalRoot(Math.round(candle.close)) : Math.round(candle.close) % 9 || 9;
+        vortexData.forEach(point => {
+            const { time, digitalRoot } = point;
             
             if (digitalRoot === buySignal) {
                 markers.push({
-                    time: candle.time,
+                    time: time,
                     position: 'belowBar',
-                    color: '#00FF00',
+                    color: '#2196F3',
                     shape: 'arrowUp',
-                    text: `BUY (${digitalRoot})`,
-                    size: 2
+                    text: `BUY (${digitalRoot})`
                 });
             } else if (digitalRoot === sellSignal) {
                 markers.push({
-                    time: candle.time,
+                    time: time,
                     position: 'aboveBar',
-                    color: '#FF0000',
+                    color: '#e91e63',
                     shape: 'arrowDown',
-                    text: `SELL (${digitalRoot})`,
-                    size: 2
+                    text: `SELL (${digitalRoot})`
                 });
             }
         });
-        
-        return markers;
-    }
 
-    /**
-     * Create a line series for vortex numbers
-     * @param {Array} vortexData - Vortex overlay data
-     * @returns {Array} Line series data
-     */
-    static createVortexLineSeries(vortexData) {
-        return vortexData.map(point => ({
+        this.candlestickSeries.setMarkers(markers);
+
+        const digitalRootSeries = this.chart.addLineSeries({
+            color: '#ff6b35',
+            lineWidth: 2,
+            title: 'Digital Root',
+            priceScaleId: 'left',
+        });
+
+        this.chart.priceScale('left').applyOptions({
+            position: 'left',
+            scaleMargins: { top: 0.1, bottom: 0.1 },
+            borderVisible: false,
+        });
+
+        const digitalRootLineData = vortexData.map(point => ({
             time: point.time,
-            value: point.value
+            value: point.digitalRoot
         }));
+
+        digitalRootSeries.setData(digitalRootLineData);
+        this.vortexSeries = digitalRootSeries;
+        this.signalMarkers = markers;
     }
 
-    /**
-     * Generate statistics for TradingView display
-     * @param {Array} candlestickData - Candlestick data
-     * @param {Array} vortexData - Vortex data
-     * @returns {Object} Statistics object
-     */
-    static generateStatistics(candlestickData, vortexData) {
-        const prices = candlestickData.map(c => c.close);
-        const digitalRoots = vortexData.map(v => v.value);
-        
-        // Price statistics
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-        const totalReturn = ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100;
-        
-        // Digital root frequency
-        const rootFrequency = {};
-        for (let i = 1; i <= 9; i++) {
-            rootFrequency[i] = digitalRoots.filter(root => root === i).length;
-        }
-        
-        // Tesla numbers (3, 6, 9) frequency
-        const teslaCount = digitalRoots.filter(root => [3, 6, 9].includes(root)).length;
-        const doublingSeqCount = digitalRoots.filter(root => [1, 2, 4, 8, 7, 5].includes(root)).length;
-        
-        return {
-            priceStats: {
-                min: minPrice.toFixed(2),
-                max: maxPrice.toFixed(2),
-                average: avgPrice.toFixed(2),
-                totalReturn: totalReturn.toFixed(2) + '%',
-                totalPeriod: candlestickData.length + ' days'
-            },
-            vortexStats: {
-                digitalRootDistribution: rootFrequency,
-                teslaNumbersPercent: ((teslaCount / digitalRoots.length) * 100).toFixed(1) + '%',
-                doublingSequencePercent: ((doublingSeqCount / digitalRoots.length) * 100).toFixed(1) + '%'
+    generateTradingSignals(vortexData, buySignal, sellSignal) {
+        const signals = [];
+        let position = null;
+        let entryPrice = 0;
+        let entryDate = null;
+
+        vortexData.forEach(point => {
+            const { time, digitalRoot, price } = point;
+            const date = new Date(time * 1000).toISOString().split('T')[0];
+
+            if (digitalRoot === buySignal && position !== 'long') {
+                if (position === 'short') {
+                    const pnl = entryPrice - price;
+                    const pnlPercent = (pnl / entryPrice) * 100;
+                    signals.push({
+                        date: date,
+                        action: 'CLOSE_SHORT',
+                        price: price,
+                        digitalRoot: digitalRoot,
+                        pnl: pnl,
+                        pnlPercent: pnlPercent
+                    });
+                }
+                
+                signals.push({
+                    date: date,
+                    action: 'BUY',
+                    price: price,
+                    digitalRoot: digitalRoot,
+                    pnl: 0,
+                    pnlPercent: 0
+                });
+                position = 'long';
+                entryPrice = price;
+                entryDate = date;
+                
+            } else if (digitalRoot === sellSignal && position !== 'short') {
+                if (position === 'long') {
+                    const pnl = price - entryPrice;
+                    const pnlPercent = (pnl / entryPrice) * 100;
+                    signals.push({
+                        date: date,
+                        action: 'CLOSE_LONG',
+                        price: price,
+                        digitalRoot: digitalRoot,
+                        pnl: pnl,
+                        pnlPercent: pnlPercent
+                    });
+                }
+                
+                signals.push({
+                    date: date,
+                    action: 'SELL',
+                    price: price,
+                    digitalRoot: digitalRoot,
+                    pnl: 0,
+                    pnlPercent: 0
+                });
+                position = 'short';
+                entryPrice = price;
+                entryDate = date;
             }
-        };
+        });
+
+        return signals;
+    }
+
+    destroy() {
+        if (this.chart) {
+            this.chart.remove();
+            this.chart = null;
+        }
     }
 }
 
-// UMD export: Node.js (CommonJS) and browser global
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = TradingViewDataFormatter;
-} else if (typeof window !== 'undefined') {
-    window.TradingViewDataFormatter = TradingViewDataFormatter;
-}
+window.TradingViewChart = TradingViewChart;

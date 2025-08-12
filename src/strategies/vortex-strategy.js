@@ -26,6 +26,11 @@ class VortexStrategy {
             // Risk management
             stopLossPercent: 10,      // Stop loss percentage
             takeProfitPercent: 20,    // Take profit percentage
+            positionSize: 1.0,        // Position size as fraction of capital
+            
+            // Trading costs
+            feePercent: 0.10,         // Fee percentage per side
+            slippageBps: 5,           // Slippage in basis points
             
             ...config
         };

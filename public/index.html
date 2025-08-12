@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vortex Trading Backtester</title>
     <link rel="stylesheet" href="/src/ui/styles.css">
-    <!-- TradingView Lightweight Charts -->
-    <script src="/public/libs/lightweight-charts.standalone.development.js"></script>
+    <!-- TradingView Lightweight Charts (CDN) -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
     <div class="container">
@@ -36,6 +36,21 @@
                     </div>
                     
                     <div class="config-group">
+                        <label for="hold-signal">Hold Signal (Digital Root):</label>
+                        <select id="hold-signal">
+                            <option value="1">1 - Start</option>
+                            <option value="2">2 - Growth</option>
+                            <option value="3">3 - Tesla Positive</option>
+                            <option value="4">4 - Structure</option>
+                            <option value="5">5 - Peak</option>
+                            <option value="6">6 - Tesla Negative</option>
+                            <option value="7">7 - Decline</option>
+                            <option value="8">8 - Power</option>
+                            <option value="9" selected>9 - Balance</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group">
                         <label for="sell-signal">Sell Signal (Digital Root):</label>
                         <select id="sell-signal">
                             <option value="1">1 - Start</option>
@@ -56,6 +71,39 @@
                     </div>
                     
                     <div class="config-group">
+                        <label>Filters</label>
+                        <div class="inline">
+                            <label><input type="checkbox" id="tesla-filter" checked> Tesla 3-6-9</label>
+                            <label><input type="checkbox" id="sequence-filter" checked> Doubling Sequence</label>
+                        </div>
+                    </div>
+
+                    <div class="config-group">
+                        <label for="position-size">Position Size (0.1 - 1.0)</label>
+                        <input type="number" id="position-size" value="1.0" min="0.1" max="1.0" step="0.1">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="stop-loss">Stop Loss %</label>
+                        <input type="number" id="stop-loss" value="10" min="0" max="100" step="0.5">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="take-profit">Take Profit %</label>
+                        <input type="number" id="take-profit" value="20" min="0" max="100" step="0.5">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="fee-percent">Fee % (per side)</label>
+                        <input type="number" id="fee-percent" value="0.10" min="0" max="1" step="0.01">
+                    </div>
+
+                    <div class="config-group">
+                        <label for="slippage-bps">Slippage (bps)</label>
+                        <input type="number" id="slippage-bps" value="5" min="0" max="200" step="1">
+                    </div>
+
+                    <div class="config-group">
                         <label for="date-range">Test Period:</label>
                         <div class="date-inputs">
                             <input type="date" id="start-date" value="2020-01-01">
@@ -67,6 +115,25 @@
                 <div class="action-buttons">
                     <button id="run-backtest" class="btn-primary">🚀 Run Backtest</button>
                     <button id="reset-config" class="btn-secondary">🔄 Reset</button>
+                </div>
+
+                <div class="strategy-info">
+                    <h3>About this Strategy</h3>
+                    <p>
+                        This experimental system applies vortex mathematics to market prices:
+                        it computes digital roots (mod 9) and uses the classic doubling cycle
+                        (1→2→4→8→7→5) for sequencing. Default rules are: BUY on 1 (cycle start),
+                        SELL on 5 (cycle peak), HOLD on 9 (balance). Optional Tesla 3-6-9 filter
+                        biases entries/exits and the doubling sequence filter constrains signals
+                        to the canonical cycle. Include realistic assumptions via fees and slippage.
+                    </p>
+                    <ul>
+                        <li><strong>Digital Root:</strong> price reduced via modulo 9 arithmetic</li>
+                        <li><strong>Doubling Sequence:</strong> 1 → 2 → 4 → 8 → 7 → 5</li>
+                        <li><strong>Tesla Filter:</strong> 3 (buy bias), 6 (sell bias), 9 (hold)</li>
+                        <li><strong>Risk:</strong> stop loss / take profit / position size</li>
+                        <li><strong>Costs:</strong> per-side fees and slippage (bps)</li>
+                    </ul>
                 </div>
             </section>
 

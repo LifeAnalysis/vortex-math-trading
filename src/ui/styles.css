@@ -568,6 +568,176 @@ header h1 {
     }
 }
 
+/* Additional UI Components */
+.inline {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.inline label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: normal;
+    font-size: 0.95rem;
+}
+
+.strategy-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.strategy-info h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.strategy-info p {
+    color: #6c757d;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.strategy-info ul {
+    color: #6c757d;
+    line-height: 1.6;
+    padding-left: 20px;
+}
+
+.strategy-info li {
+    margin-bottom: 8px;
+}
+
+/* Trades Table Styling */
+.trades-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.trades-table th,
+.trades-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.trades-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.trades-table tr:hover {
+    background: #f8f9fa;
+}
+
+.trade-buy {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.trade-sell {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.positive {
+    color: #28a745 !important;
+    font-weight: 600;
+}
+
+.negative {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+
+/* Distribution Chart */
+.distribution-chart {
+    display: flex;
+    justify-content: space-around;
+    align-items: end;
+    height: 120px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.distribution-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.bar-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.bar-fill {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    width: 20px;
+    min-height: 2px;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.bar-value {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Performance Summary */
+.performance-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.performance-summary p {
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.performance-summary strong {
+    color: #343a40;
+}
+
+/* Notification styles */
+.notification {
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: slideIn 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 /* Print Styles */
 @media print {
     body {
