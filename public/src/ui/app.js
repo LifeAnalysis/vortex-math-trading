@@ -1092,104 +1092,9 @@ function updateTradesTable() {
         `;
     }
     
-    // Calculate average holding period for completed trades
-    const completedTrades = backtestResults.trades.filter(trade => 
-        trade.type === 'CLOSE' && trade.entryDate && trade.date
-    );
+    tradesContainer.innerHTML = positionsHtml;
     
-    let avgHoldingPeriod = 0;
-    if (completedTrades.length > 0) {
-        const totalHoldingDays = completedTrades.reduce((sum, trade) => {
-            const entryDate = new Date(trade.entryDate);
-            const exitDate = new Date(trade.date);
-            const holdingDays = Math.round((exitDate - entryDate) / (1000 * 60 * 60 * 24));
-            return sum + holdingDays;
-        }, 0);
-        avgHoldingPeriod = totalHoldingDays / completedTrades.length;
-    }
-    
-    let html = `
-        <div class="trade-history-header">
-            <h3>Trade History</h3>
-            <div class="avg-holding-time">
-                <span class="metric-label">Average Held Position Time:</span>
-                <span class="metric-value">${avgHoldingPeriod.toFixed(1)} days</span>
-            </div>
-        </div>
-        <table class="trades-table" id="trades-table-sortable">
-            <thead>
-                <tr>
-                    <th class="sortable" data-column="date" data-type="date">
-                        Date <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="action" data-type="string">
-                        Action <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="price" data-type="number">
-                        Price <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="digitalRoot" data-type="number">
-                        Digital Root <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="portfolio" data-type="number">
-                        Portfolio <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="pnl" data-type="number">
-                        P&L <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="pnlPercent" data-type="number">
-                        P&L % <span class="sort-indicator">⇅</span>
-                    </th>
-                    <th class="sortable" data-column="drawdown" data-type="number">
-                        Drawdown % <span class="sort-indicator">⇅</span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    // Build a quick lookup map from date -> drawdown for fast access
-    const drawdownByDate = {};
-    if (backtestResults.dailyPortfolio && Array.isArray(backtestResults.dailyPortfolio)) {
-        backtestResults.dailyPortfolio.forEach(d => {
-            if (d.date) drawdownByDate[d.date] = typeof d.drawdown === 'number' ? d.drawdown : 0;
-        });
-    }
-    
-    backtestResults.trades.forEach((trade, index) => {
-        // Handle different trade object structures
-        const profitLoss = trade.profit !== undefined ? trade.profit : (trade.profitLoss || 0);
-        const profitLossPercent = trade.profitPercent !== undefined ? trade.profitPercent : (trade.profitLossPercent || 0);
-        
-        const pnlClass = profitLoss >= 0 ? 'positive' : 'negative';
-        const pnlPercent = profitLossPercent ? profitLossPercent.toFixed(2) : '-';
-        
-        // Get portfolio value at this trade (use capital field from trade)
-        const portfolioValue = trade.capital || 0;
-        
-        // Drawdown at the date of the trade (from equity curve)
-        const ddValue = drawdownByDate[trade.date] ?? null;
-        const ddDisplay = ddValue != null ? `${ddValue.toFixed(2)}%` : '-';
-        const ddClass = ddValue && ddValue > 0 ? 'negative' : '';
-        
-        html += `
-            <tr data-index="${index}">
-                <td data-value="${trade.date}">${trade.date}</td>
-                <td data-value="${trade.action}"><span class="trade-${trade.action.toLowerCase()}">${trade.action}</span></td>
-                <td data-value="${trade.price}">$${trade.price.toFixed(2)}</td>
-                <td data-value="${trade.digitalRoot}">${trade.digitalRoot}</td>
-                <td data-value="${portfolioValue}" class="portfolio-value">$${portfolioValue.toLocaleString()}</td>
-                <td data-value="${profitLoss}" class="${pnlClass}">$${profitLoss.toFixed(2)}</td>
-                <td data-value="${profitLossPercent}" class="${pnlClass}">${pnlPercent}%</td>
-                <td data-value="${ddValue != null ? ddValue : ''}" class="${ddClass}">${ddDisplay}</td>
-            </tr>
-        `;
-    });
-    
-    html += '</tbody></table>';
-    tradesContainer.innerHTML = positionsHtml + html;
-    
-    // Add sort functionality for both tables
+    // Add sort functionality for positions table
     setupTableSorting();
 }
 
@@ -1197,48 +1102,40 @@ function updateTradesTable() {
  * Setup table sorting functionality
  */
 function setupTableSorting() {
-    // Setup sorting for both positions table and trades table
-    const tables = ['positions-table-sortable', 'trades-table-sortable'];
+    // Setup sorting for positions table only
+    const table = document.getElementById('positions-table-sortable');
+    if (!table) return;
     
-    tables.forEach(tableId => {
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        
-        const headers = table.querySelectorAll('th.sortable');
-        let currentSort = { column: null, direction: 'asc' };
-        
-        headers.forEach(header => {
-            header.addEventListener('click', () => {
-                const column = header.dataset.column;
-                const type = header.dataset.type;
-                
-                // Toggle direction if same column, otherwise default to ascending
-                if (currentSort.column === column) {
-                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    const headers = table.querySelectorAll('th.sortable');
+    let currentSort = { column: null, direction: 'asc' };
+    
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.column;
+            const type = header.dataset.type;
+            
+            // Toggle direction if same column, otherwise default to ascending
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.direction = 'asc';
+            }
+            currentSort.column = column;
+            
+            // Update sort indicators
+            headers.forEach(h => {
+                const indicator = h.querySelector('.sort-indicator');
+                if (h === header) {
+                    indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                    h.classList.add('sorted');
                 } else {
-                    currentSort.direction = 'asc';
-                }
-                currentSort.column = column;
-                
-                // Update sort indicators
-                headers.forEach(h => {
-                    const indicator = h.querySelector('.sort-indicator');
-                    if (h === header) {
-                        indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
-                        h.classList.add('sorted');
-                    } else {
-                        indicator.textContent = '⇅';
-                        h.classList.remove('sorted');
-                    }
-                });
-                
-                // Sort the table (use different column mappings for different tables)
-                if (tableId === 'positions-table-sortable') {
-                    sortPositionsTable(table, column, type, currentSort.direction);
-                } else {
-                    sortTable(table, column, type, currentSort.direction);
+                    indicator.textContent = '⇅';
+                    h.classList.remove('sorted');
                 }
             });
+            
+            // Sort the positions table
+            sortPositionsTable(table, column, type, currentSort.direction);
         });
     });
 }
@@ -1301,64 +1198,7 @@ function sortPositionsTable(table, column, type, direction) {
     rows.forEach(row => tbody.appendChild(row));
 }
 
-/**
- * Sort table by column
- */
-function sortTable(table, column, type, direction) {
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    
-    rows.sort((a, b) => {
-        let aVal, bVal;
-        
-        // Get cell based on column index
-        const columnIndex = {
-            'date': 0,
-            'action': 1,
-            'price': 2,
-            'digitalRoot': 3,
-            'portfolio': 4,
-            'pnl': 5,
-            'pnlPercent': 6,
-            'drawdown': 7
-        };
-        
-        const cellIndex = columnIndex[column];
-        const aCells = a.querySelectorAll('td');
-        const bCells = b.querySelectorAll('td');
-        
-        aVal = aCells[cellIndex]?.dataset.value;
-        bVal = bCells[cellIndex]?.dataset.value;
-        
-        // Convert values based on type
-        if (type === 'date') {
-            aVal = new Date(aVal);
-            bVal = new Date(bVal);
-        } else if (type === 'number') {
-            aVal = parseFloat(aVal) || 0;
-            bVal = parseFloat(bVal) || 0;
-        }
-        // string type uses values as-is
-        
-        // Handle null/undefined values
-        if (aVal == null && bVal == null) return 0;
-        if (aVal == null) return 1;
-        if (bVal == null) return -1;
-        
-        let comparison = 0;
-        if (type === 'number' || type === 'date') {
-            comparison = aVal - bVal;
-        } else {
-            comparison = aVal.toString().localeCompare(bVal.toString());
-        }
-        
-        return direction === 'asc' ? comparison : -comparison;
-    });
-    
-    // Clear tbody and append sorted rows
-    tbody.innerHTML = '';
-    rows.forEach(row => tbody.appendChild(row));
-}
+
 
 /**
  * Update the analysis tab
