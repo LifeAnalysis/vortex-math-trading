@@ -396,6 +396,25 @@ function updatePerformanceMetrics() {
     document.getElementById('sortino-ratio').textContent = backtestResults.performance.sortinoRatio.toFixed(2);
     document.getElementById('final-capital').textContent = `$${backtestResults.finalCapital.toLocaleString()}`;
     
+    // Add worst drawdown day info
+    if (backtestResults.dailyPortfolio && backtestResults.dailyPortfolio.length > 0) {
+        let maxDD = 0;
+        let worstDay = null;
+        
+        backtestResults.dailyPortfolio.forEach(day => {
+            if (day.drawdown > maxDD) {
+                maxDD = day.drawdown;
+                worstDay = day;
+            }
+        });
+        
+        if (worstDay) {
+            const maxDDElement = document.getElementById('max-drawdown');
+            maxDDElement.title = `Worst day: ${worstDay.date} (Price: $${worstDay.price.toLocaleString()})`;
+            maxDDElement.style.cursor = 'help';
+        }
+    }
+    
     // Update buy and hold comparison if available
     if (backtestResults.buyAndHold) {
         document.getElementById('buy-hold-return').textContent = `${backtestResults.buyAndHold.return.toFixed(2)}%`;
@@ -810,6 +829,29 @@ function updateAnalysisTab() {
                                (backtestResults.performance.totalTrades > 0 ? 
                                 (backtestResults.performance.avgWin || 0) : 0);
         
+        // Find worst drawdown day details
+        let worstDayInfo = '';
+        if (backtestResults.dailyPortfolio && backtestResults.dailyPortfolio.length > 0) {
+            let maxDD = 0;
+            let worstDay = null;
+            
+            backtestResults.dailyPortfolio.forEach(day => {
+                if (day.drawdown > maxDD) {
+                    maxDD = day.drawdown;
+                    worstDay = day;
+                }
+            });
+            
+            if (worstDay) {
+                worstDayInfo = `
+                    <p><strong>Worst Drawdown Day:</strong> ${worstDay.date}</p>
+                    <p><strong>Price on Worst Day:</strong> $${worstDay.price.toLocaleString()}</p>
+                    <p><strong>Portfolio Value:</strong> $${worstDay.portfolioValue.toLocaleString()}</p>
+                    <p><strong>Position:</strong> ${worstDay.position}</p>
+                `;
+            }
+        }
+        
         performanceElement.innerHTML = `
             <div class="performance-summary">
                 <p><strong>Strategy:</strong> Buy on digital root ${appState.config.buySignal}, Sell on digital root ${appState.config.sellSignal}</p>
@@ -817,6 +859,11 @@ function updateAnalysisTab() {
                 <p><strong>Total Trades:</strong> ${backtestResults.performance.totalTrades}</p>
                 <p><strong>Winning Trades:</strong> ${backtestResults.performance.winningTrades}</p>
                 <p><strong>Average Trade:</strong> ${avgTradeReturn.toFixed(2)}%</p>
+                <hr style="margin: 15px 0; border: 1px solid #333;">
+                <h4>📉 Drawdown Analysis</h4>
+                <p><strong>Max Drawdown:</strong> ${backtestResults.performance.maxDrawdown.toFixed(2)}%</p>
+                ${worstDayInfo}
+                <p><em>Note: Max drawdown shows worst single day vs peak. Trade table shows drawdowns only on trade execution days.</em></p>
             </div>
         `;
     } else {

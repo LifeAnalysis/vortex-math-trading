@@ -863,7 +863,15 @@ function updateAnalysisTab() {
                 <h4>📉 Drawdown Analysis</h4>
                 <p><strong>Max Drawdown:</strong> ${backtestResults.performance.maxDrawdown.toFixed(2)}%</p>
                 ${worstDayInfo}
-                <p><em>Note: Max drawdown shows worst single day vs peak. Trade table shows drawdowns only on trade execution days.</em></p>
+                <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <h5>🎓 Understanding Drawdown:</h5>
+                    <p><strong>Drawdown ≠ Daily Price Drop</strong></p>
+                    <p>• <strong>Portfolio Peak:</strong> Your highest portfolio value ever reached</p>
+                    <p>• <strong>Current Value:</strong> Portfolio value on the worst day</p>
+                    <p>• <strong>Drawdown = (Peak - Current) / Peak</strong></p>
+                    <p><em>Example: Peak $100K → Worst Day $30K = 70% drawdown</em></p>
+                    <p><em>This happens when you're holding positions during market downturns, NOT from single-day crashes.</em></p>
+                </div>
             </div>
         `;
     } else {
