@@ -786,12 +786,7 @@ function createTradeChart() {
             }
         }
         
-        // Draw connecting lines between trade pairs
-        try {
-            drawTradeConnections(chartContainer, chart, priceSeries, tradePairs);
-        } catch (connErr) {
-            console.warn('[trades] drawTradeConnections failed:', connErr);
-        }
+
 
         // Fit content and store chart reference
         chart.timeScale().fitContent();
