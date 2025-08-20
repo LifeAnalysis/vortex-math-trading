@@ -55,3 +55,4 @@ build/
 # API keys and sensitive data
 config/api-keys.json
 *.key
+.vercel

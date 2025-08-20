@@ -1,0 +1,965 @@
+/**
+ * Vortex Trading Backtester - Neon Dark Theme
+ * Modern dark UI with neon accents for trading analysis
+ */
+
+/* ============================================
+   IMPORTS & CSS CUSTOM PROPERTIES
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    /* Colors */
+    --primary-green: #00ff88;
+    --primary-green-dark: #00cc6a;
+    --primary-green-light: #00ffaa;
+    --accent-red: #ff4757;
+    --accent-orange: #ffa502;
+    --accent-blue: #00bcd4;
+    
+    /* Neutral colors */
+    --bg-primary: #0c0c0c;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #0f0f0f;
+    --text-primary: #e0e0e0;
+    --text-secondary: #c0c0c0;
+    --text-muted: #888;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 2.5rem;
+    
+    /* Border radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-xxl: 24px;
+    
+    /* Shadows */
+    --shadow-sm: 0 0 15px rgba(0, 255, 136, 0.1);
+    --shadow-md: 0 0 25px rgba(0, 255, 136, 0.15);
+    --shadow-lg: 0 0 30px rgba(0, 255, 136, 0.3);
+    
+    /* Typography */
+    --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================
+   RESET & BASE STYLES
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family-primary);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+    min-height: 100vh;
+    font-size: 14px;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: var(--spacing-md);
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-xxl);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    box-shadow: var(--shadow-md), 0 20px 40px rgba(0, 0, 0, 0.5);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    display: grid;
+    grid-template-areas: 
+        "header header"
+        "config results"
+        "strategy results";
+    grid-template-columns: minmax(400px, 1fr) minmax(600px, 2fr);
+    grid-template-rows: auto 1fr auto;
+    gap: var(--spacing-lg);
+    min-height: calc(100vh - 3rem);
+}
+
+/* ============================================
+   LAYOUT SECTIONS
+   ============================================ */
+
+/* Header */
+header {
+    grid-area: header;
+    text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 50%, var(--primary-green) 100%);
+    border-radius: var(--radius-lg);
+    color: #000;
+    box-shadow: var(--shadow-lg), 0 8px 25px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(0, 255, 136, 0.3);
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 4s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Left Panel (Config + Strategy) */
+.left-panel {
+    grid-area: config;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+}
+
+/* Right Panel (Results) */
+.right-panel {
+    grid-area: results;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    min-height: calc(100vh - 8rem);
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+/* ============================================
+   CONFIGURATION COMPONENTS
+   ============================================ */
+
+.config-section {
+    background: linear-gradient(145deg, rgba(15, 15, 15, 0.8) 0%, rgba(25, 25, 25, 0.9) 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    box-shadow: var(--shadow-sm), 0 8px 32px rgba(0, 0, 0, 0.3);
+    flex: 1;
+}
+
+.config-section h2 {
+    color: var(--primary-green);
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.config-group {
+    background: rgba(0, 0, 0, 0.4);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 255, 136, 0.1);
+    transition: all 0.3s ease;
+}
+
+.config-group:hover {
+    border-color: rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.config-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+    color: var(--primary-green);
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+}
+
+.config-group input,
+.config-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid rgba(0, 255, 136, 0.2);
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-family-mono);
+    transition: all 0.3s ease;
+}
+
+.config-group input:focus,
+.config-group select:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.config-group input::placeholder {
+    color: rgba(224, 224, 224, 0.5);
+}
+
+/* Inline checkboxes */
+.inline {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.inline label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.inline input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: var(--primary-green);
+    transform: scale(1.1);
+}
+
+/* Date inputs */
+.date-inputs {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.date-inputs input {
+    flex: 1;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    margin: var(--spacing-md) 0;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-lg), 0 6px 20px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--font-family-primary);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), 0 8px 25px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--text-primary);
+    border: 2px solid rgba(0, 255, 136, 0.3);
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: var(--primary-green);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   STRATEGY INFO COMPONENT
+   ============================================ */
+
+.strategy-info {
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.8) 100%);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(0, 255, 136, 0.1);
+    flex: 1;
+}
+
+.strategy-info h3 {
+    color: var(--primary-green);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.strategy-info p {
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.strategy-info ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.strategy-info li {
+    margin-bottom: var(--spacing-xs);
+    padding-left: var(--spacing-md);
+    position: relative;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    font-size: 0.85rem;
+}
+
+.strategy-info li::before {
+    content: '▶';
+    position: absolute;
+    left: 0;
+    color: var(--primary-green);
+    font-size: 0.7rem;
+}
+
+.strategy-info strong {
+    color: var(--primary-green);
+    font-weight: 600;
+}
+
+/* ============================================
+   RESULTS SECTION
+   ============================================ */
+
+.results-section {
+    background: linear-gradient(145deg, rgba(5, 5, 5, 0.9) 0%, rgba(15, 15, 15, 0.95) 100%);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    box-shadow: var(--shadow-lg), 0 15px 35px rgba(0, 0, 0, 0.4);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.results-section h2 {
+    color: var(--primary-green);
+    font-size: 1.8rem;
+    margin-bottom: var(--spacing-md);
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.metric-card {
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-green), var(--primary-green-dark), var(--primary-green));
+    opacity: 0.7;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-md), 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.metric-card h3 {
+    color: var(--primary-green);
+    font-size: 0.8rem;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    font-family: var(--font-family-mono);
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.2;
+}
+
+.metric-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-family-mono);
+}
+
+.metric-value.positive {
+    color: var(--primary-green);
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.metric-value.negative {
+    color: var(--accent-red);
+    text-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+}
+
+.comparison-card {
+    border-color: rgba(0, 255, 136, 0.25);
+    background: linear-gradient(145deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+/* ============================================
+   TABS COMPONENT
+   ============================================ */
+
+.tabs {
+    display: flex;
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px;
+    gap: 4px;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tab:hover {
+    color: var(--primary-green);
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.tab.active {
+    background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+    color: #000;
+    font-weight: 600;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-panel {
+    display: none;
+    flex: 1;
+    min-height: 600px;
+    overflow: visible;
+}
+
+.tab-panel.active {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease;
+    min-height: 600px;
+    overflow: visible;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   CHARTS COMPONENT
+   ============================================ */
+
+#price-chart-container {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    box-shadow: var(--shadow-sm);
+    flex: 1;
+    min-height: 550px;
+    overflow: visible;
+}
+
+#tradingview-chart {
+    border-radius: var(--radius-md);
+    overflow: visible;
+    background: #000;
+    border: 1px solid rgba(0, 255, 136, 0.1);
+    position: relative;
+    height: 500px !important;
+    width: 100% !important;
+    min-height: 500px;
+}
+
+/* Ensure canvas paints over overlays */
+#tradingview-chart canvas {
+    position: relative;
+    z-index: 10;
+}
+
+/* Make sure vortex labels never cover crosshair/line rendering */
+.vortex-label {
+    z-index: 5 !important;
+}
+
+.vortex-label {
+    position: absolute !important;
+    z-index: 1000 !important;
+    pointer-events: none !important;
+}
+
+#chart-status {
+    margin-top: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: var(--radius-sm);
+    color: var(--primary-green);
+    text-align: center;
+    font-family: var(--font-family-mono);
+    font-size: 0.8rem;
+    border: 1px solid rgba(0, 255, 136, 0.1);
+}
+
+/* ============================================
+   SIGNAL LEGEND & TRADES COMPONENTS
+   ============================================ */
+
+.signal-legend {
+    background: rgba(0, 0, 0, 0.6);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    margin-bottom: var(--spacing-md);
+}
+
+.signal-legend h4 {
+    color: var(--primary-green);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-xs);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.trades-container {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    overflow-x: auto;
+    flex: 1;
+}
+
+.trades-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-family-mono);
+    font-size: 0.8rem;
+}
+
+.trades-table th {
+    background: rgba(0, 255, 136, 0.1);
+    color: var(--primary-green);
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.trades-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.trades-table th.sortable:hover {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--primary-green-light);
+}
+
+.trades-table th.sortable.sorted {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--primary-green-light);
+}
+
+.sort-indicator {
+    margin-left: 5px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.trades-table th.sortable:hover .sort-indicator {
+    opacity: 1;
+}
+
+.trades-table th.sortable.sorted .sort-indicator {
+    opacity: 1;
+    font-weight: bold;
+}
+
+.trades-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    color: var(--text-primary);
+}
+
+.trades-table tr:hover {
+    background: rgba(0, 255, 136, 0.05);
+}
+
+.trade-buy {
+    color: var(--primary-green);
+    font-weight: 600;
+}
+
+.trade-sell {
+    color: var(--accent-red);
+    font-weight: 600;
+}
+
+.trade-hold {
+    color: var(--accent-orange);
+    font-weight: 600;
+}
+
+/* ============================================
+   TRADE HISTORY & ANALYSIS COMPONENTS
+   ============================================ */
+
+.trade-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.trade-history-header h3 {
+    color: var(--primary-green);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.avg-holding-time {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-family: var(--font-family-mono);
+}
+
+.avg-holding-time .metric-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.avg-holding-time .metric-value {
+    color: var(--primary-green);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 3px 6px;
+    background: rgba(0, 255, 136, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.portfolio-value {
+    color: var(--accent-blue) !important;
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.analysis-card {
+    background: rgba(0, 0, 0, 0.6);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(0, 255, 136, 0.15);
+}
+
+.analysis-card h4 {
+    color: var(--primary-green);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* ============================================
+   DISTRIBUTION CHART & PERFORMANCE COMPONENTS
+   ============================================ */
+
+.distribution-chart {
+    display: flex;
+    align-items: end;
+    gap: 6px;
+    margin: var(--spacing-sm) 0;
+    height: 100px;
+}
+
+.distribution-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.bar-label {
+    color: var(--primary-green);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--font-family-mono);
+}
+
+.bar-fill {
+    background: linear-gradient(180deg, var(--primary-green), var(--primary-green-dark));
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+.bar-fill:hover {
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+}
+
+.bar-value {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-family: var(--font-family-mono);
+}
+
+.performance-summary {
+    line-height: 1.6;
+}
+
+.performance-summary p {
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.performance-summary strong {
+    color: var(--primary-green);
+    font-weight: 600;
+}
+
+/* ============================================
+   NOTIFICATIONS
+   ============================================ */
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    max-width: 350px;
+    box-shadow: var(--shadow-lg), 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.notification.success {
+    background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+    color: #000;
+    border-color: rgba(0, 255, 136, 0.3);
+}
+
+.notification.error {
+    background: linear-gradient(135deg, var(--accent-red), #ff3742);
+    color: #fff;
+    border-color: rgba(255, 71, 87, 0.3);
+}
+
+.notification.warning {
+    background: linear-gradient(135deg, var(--accent-orange), #ff9500);
+    color: #000;
+    border-color: rgba(255, 165, 2, 0.3);
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #3742fa, #2f3542);
+    color: #fff;
+    border-color: rgba(55, 66, 250, 0.3);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN (Desktop Focus)
+   ============================================ */
+
+@media (max-width: 1400px) {
+    .container {
+        grid-template-columns: minmax(350px, 1fr) minmax(500px, 1.5fr);
+        max-width: 1400px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .container {
+        grid-template-areas: 
+            "header"
+            "config"
+            "results"
+            "strategy";
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr auto;
+        padding: var(--spacing-sm);
+    }
+    
+    .left-panel,
+    .right-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+    
+    .config-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
