@@ -656,6 +656,25 @@ header h1 {
     flex: 1;
 }
 
+.trade-chart-section {
+    margin-bottom: 30px;
+}
+
+.trade-chart-section h4 {
+    color: #00ff88;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#trade-chart {
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
 .trades-table {
     width: 100%;
     border-collapse: collapse;

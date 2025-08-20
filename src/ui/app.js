@@ -587,19 +587,53 @@ function filterDataByDateRange(data, startDate, endDate) {
  * Create a visual trade chart showing buy/sell points
  */
 function createTradeChart() {
-    if (!backtestResults || !processedData || !window.LightweightCharts) {
+    console.log('[trades] Creating trade chart...');
+    
+    const chartContainer = document.getElementById('trade-chart');
+    if (!chartContainer) {
+        console.error('[trades] Chart container not found');
         return;
     }
     
-    const chartContainer = document.getElementById('trade-chart');
-    if (!chartContainer) return;
+    // Check for required data
+    if (!backtestResults) {
+        console.log('[trades] No backtest results available');
+        chartContainer.innerHTML = '<p style="color: #ffc107; padding: 20px; text-align: center;">Run a backtest to see trade visualization</p>';
+        return;
+    }
+    
+    if (!processedData || !processedData.dailyData) {
+        console.error('[trades] No processed data available');
+        chartContainer.innerHTML = '<p style="color: #ff6b6b; padding: 20px; text-align: center;">No price data available</p>';
+        return;
+    }
+    
+    if (!backtestResults.trades || backtestResults.trades.length === 0) {
+        console.log('[trades] No trades to display');
+        chartContainer.innerHTML = '<p style="color: #ffc107; padding: 20px; text-align: center;">No trades executed in this backtest period</p>';
+        return;
+    }
+    
+    // Check for LightweightCharts library
+    if (!window.LightweightCharts) {
+        console.error('[trades] LightweightCharts library not loaded');
+        chartContainer.innerHTML = '<p style="color: #ff6b6b; padding: 20px; text-align: center;">Chart library not loaded. Please refresh the page.</p>';
+        return;
+    }
     
     // Clear any existing chart
     chartContainer.innerHTML = '';
     
     try {
+        console.log('[trades] Available data:', {
+            trades: backtestResults.trades.length,
+            dailyData: processedData.dailyData.length,
+            startDate: appState.config.startDate,
+            endDate: appState.config.endDate
+        });
+        
         // Create the chart
-        const chart = LightweightCharts.createChart(chartContainer, {
+        const chart = window.LightweightCharts.createChart(chartContainer, {
             width: chartContainer.clientWidth,
             height: 300,
             layout: {
@@ -623,7 +657,7 @@ function createTradeChart() {
                 secondsVisible: false
             },
             crosshair: {
-                mode: LightweightCharts.CrosshairMode?.Normal || 1,
+                mode: window.LightweightCharts.CrosshairMode?.Normal || 1,
                 vertLine: { color: '#00ff88', width: 1, style: 2 },
                 horzLine: { color: '#00ff88', width: 1, style: 2 }
             }
@@ -636,6 +670,13 @@ function createTradeChart() {
             d.date >= startDate && d.date <= endDate
         );
         
+        console.log('[trades] Filtered data points:', filteredData.length);
+        
+        if (filteredData.length === 0) {
+            chartContainer.innerHTML = '<p style="color: #ffc107; padding: 20px; text-align: center;">No price data available for the selected date range</p>';
+            return;
+        }
+        
         // Prepare price data for chart
         const priceData = filteredData.map(d => ({
             time: Math.floor(d.timestamp / 1000),
@@ -643,7 +684,7 @@ function createTradeChart() {
         }));
         
         // Add price line
-        const priceSeries = chart.addSeries(LightweightCharts.LineSeries, {
+        const priceSeries = chart.addSeries(window.LightweightCharts.LineSeries, {
             color: '#87CEEB',
             lineWidth: 2,
             title: 'Price'
@@ -683,11 +724,11 @@ function createTradeChart() {
         chart.timeScale().fitContent();
         chartContainer._tradeChart = chart;
         
-        console.log(`[trades] Created trade chart with ${markers.length} markers`);
+        console.log(`[trades] Successfully created trade chart with ${markers.length} markers`);
         
     } catch (error) {
         console.error('[trades] Error creating trade chart:', error);
-        chartContainer.innerHTML = '<p style="color: #ff6b6b; padding: 20px;">Unable to load trade chart</p>';
+        chartContainer.innerHTML = `<p style="color: #ff6b6b; padding: 20px; text-align: center;">Chart error: ${error.message}</p>`;
     }
 }
 
