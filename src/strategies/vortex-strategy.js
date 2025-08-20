@@ -177,17 +177,7 @@ class VortexStrategy {
         let action = 'HOLD';
         let reasoning = [];
         
-        // Check for doubling sequence filter first (acts as exclusion filter)
-        if (this.config.useSequenceFilter && !VM.isInDoublingSequence(digitalRoot)) {
-            action = 'HOLD';
-            reasoning.push(`Digital root ${digitalRoot} not in doubling sequence - no action`);
-            return {
-                action: action,
-                reasoning: reasoning.join('; ') || 'No specific vortex pattern detected'
-            };
-        }
-        
-        // Check for Tesla numbers (3, 6, 9) filter
+        // PRIORITY 1: Check for Tesla numbers (3, 6, 9) filter FIRST
         if (this.config.useTeslaFilter && VM.isTeslaNumber(digitalRoot)) {
             if (digitalRoot === 9) {
                 action = 'HOLD';
@@ -199,8 +189,14 @@ class VortexStrategy {
                 action = 'SELL';
                 reasoning.push('Tesla negative polarity (6) - downward energy flow');
             }
-        } else {
-            // Basic vortex strategy signals (only if Tesla filter not applied)
+        } 
+        // PRIORITY 2: Check for doubling sequence filter (only if Tesla didn't trigger)
+        else if (this.config.useSequenceFilter && !VM.isInDoublingSequence(digitalRoot)) {
+            action = 'HOLD';
+            reasoning.push(`Digital root ${digitalRoot} not in doubling sequence - no action`);
+        }
+        // PRIORITY 3: Basic vortex strategy signals (if no filters triggered)
+        else {
             if (digitalRoot === this.config.buySignal) {
                 action = 'BUY';
                 reasoning.push(`Vortex buy signal (digital root ${this.config.buySignal}) - cycle start`);
