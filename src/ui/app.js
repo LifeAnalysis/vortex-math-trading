@@ -632,25 +632,28 @@ function createTradeChart() {
             endDate: appState.config.endDate
         });
         
-        // Create the chart
+        // Create the chart - copy from charts.js
         const chart = window.LightweightCharts.createChart(chartContainer, {
-            width: chartContainer.clientWidth,
+            width: chartContainer.clientWidth || 800,
             height: 300,
+            autoSize: true,
             layout: {
                 background: { type: 'solid', color: '#000000' },
                 textColor: '#e0e0e0',
-                fontSize: 11,
+                fontSize: 12,
                 fontFamily: 'JetBrains Mono, monospace'
             },
             grid: {
-                vertLines: { color: 'rgba(0, 255, 136, 0.1)' },
-                horzLines: { color: 'rgba(0, 255, 136, 0.1)' }
+                vertLines: { color: 'rgba(0, 255, 136, 0.1)', style: 1 },
+                horzLines: { color: 'rgba(0, 255, 136, 0.1)', style: 1 }
             },
             rightPriceScale: {
+                borderVisible: true,
                 borderColor: 'rgba(0, 255, 136, 0.3)',
                 textColor: '#00ff88'
             },
             timeScale: {
+                borderVisible: true,
                 borderColor: 'rgba(0, 255, 136, 0.3)',
                 textColor: '#00ff88',
                 timeVisible: true,
@@ -658,9 +661,19 @@ function createTradeChart() {
             },
             crosshair: {
                 mode: window.LightweightCharts.CrosshairMode?.Normal || 1,
-                vertLine: { color: '#00ff88', width: 1, style: 2 },
-                horzLine: { color: '#00ff88', width: 1, style: 2 }
-            }
+                vertLine: { 
+                    color: '#00ff88', 
+                    width: 1, 
+                    style: window.LightweightCharts.LineStyle?.Dashed || 2 
+                },
+                horzLine: { 
+                    color: '#00ff88', 
+                    width: 1, 
+                    style: window.LightweightCharts.LineStyle?.Dashed || 2 
+                }
+            },
+            handleScroll: true,
+            handleScale: true
         });
         
         // Filter data to match backtest period
@@ -683,15 +696,54 @@ function createTradeChart() {
             value: d.price
         }));
         
-        // Add price line
-        const priceSeries = chart.addSeries(window.LightweightCharts.LineSeries, {
-            color: '#87CEEB',
-            lineWidth: 2,
-            title: 'Price'
-        });
+        // Create series - copy the exact approach from charts.js
+        let priceSeries;
+        try {
+            // Use official TradingView v5+ API syntax - same as charts.js
+            console.log('[trades] Creating line series with official v5 API');
+            
+            priceSeries = chart.addSeries(window.LightweightCharts.LineSeries, {
+                color: '#87CEEB',
+                lineWidth: 2,
+                priceLineVisible: true,
+                lastValueVisible: true
+            });
+            
+            console.log('[trades] Line series created successfully');
+            
+        } catch (lineError) {
+            console.error('[trades] Line series failed, trying area series:', lineError);
+            
+            try {
+                // Fallback to area series using v5 API
+                priceSeries = chart.addSeries(window.LightweightCharts.AreaSeries, {
+                    lineColor: '#87CEEB',
+                    topColor: 'rgba(135, 206, 235, 0.4)',
+                    bottomColor: 'rgba(135, 206, 235, 0.0)',
+                    lineWidth: 2
+                });
+                
+                console.log('[trades] Area series created as fallback');
+                
+            } catch (areaError) {
+                console.error('[trades] Both series types failed:', areaError);
+                chartContainer.innerHTML = '<p style="color: #ff6b6b; padding: 20px; text-align: center;">Unable to create chart series</p>';
+                return;
+            }
+        }
+        
         priceSeries.setData(priceData);
         
-        // Add trade markers
+        // Build trade pairs to compute P&L
+        const tradePairs = buildTradePairs(backtestResults.trades || []);
+        const sellOutcomeByTs = new Map();
+        tradePairs.forEach(p => {
+            if (p.exit && p.exit.timestamp) {
+                sellOutcomeByTs.set(p.exit.timestamp, { pnl: p.pnl, pnlPercent: p.pnlPercent });
+            }
+        });
+
+        // Add trade markers - color coded by outcome when available
         const markers = [];
         backtestResults.trades.forEach(trade => {
             const tradeDate = new Date(trade.date);
@@ -701,25 +753,46 @@ function createTradeChart() {
                 markers.push({
                     time: timestamp,
                     position: 'belowBar',
-                    color: '#26a69a',
+                    color: '#00c77a',
                     shape: 'arrowUp',
-                    text: `BUY $${trade.price.toLocaleString()}`,
-                    size: 1.2
+                    text: 'BUY',
+                    price: trade.price
                 });
             } else if (trade.action === 'SELL') {
+                const outcome = sellOutcomeByTs.get(timestamp);
+                const outcomeColor = outcome ? (outcome.pnl > 0 ? '#00ff88' : (outcome.pnl < 0 ? '#ff4757' : '#ffc107')) : '#dc3545';
+                const text = outcome && typeof outcome.pnlPercent === 'number' ? `SELL ${(outcome.pnlPercent >= 0 ? '+' : '')}${Math.round(outcome.pnlPercent)}%` : 'SELL';
                 markers.push({
                     time: timestamp,
                     position: 'aboveBar',
-                    color: '#ef5350',
+                    color: outcomeColor,
                     shape: 'arrowDown',
-                    text: `SELL $${trade.price.toLocaleString()}`,
-                    size: 1.2
+                    text,
+                    price: trade.price
                 });
             }
         });
         
-        priceSeries.setMarkers(markers);
+        if (markers.length > 0) {
+            try {
+                priceSeries.setMarkers(markers);
+                console.log(`[trades] Added ${markers.length} trade markers successfully`);
+            } catch (markerError) {
+                console.error('[trades] setMarkers failed:', markerError);
+                console.log('[trades] Falling back to manual marker rendering');
+                
+                // Fallback: manually draw markers like charts.js does with vortex labels
+                drawTradeMarkers(chartContainer, chart, priceSeries, markers);
+            }
+        }
         
+        // Draw connecting lines between trade pairs
+        try {
+            drawTradeConnections(chartContainer, chart, priceSeries, tradePairs);
+        } catch (connErr) {
+            console.warn('[trades] drawTradeConnections failed:', connErr);
+        }
+
         // Fit content and store chart reference
         chart.timeScale().fitContent();
         chartContainer._tradeChart = chart;
@@ -730,6 +803,202 @@ function createTradeChart() {
         console.error('[trades] Error creating trade chart:', error);
         chartContainer.innerHTML = `<p style="color: #ff6b6b; padding: 20px; text-align: center;">Chart error: ${error.message}</p>`;
     }
+}
+
+/**
+ * Manually draw trade markers on the chart (fallback for when setMarkers fails)
+ */
+function drawTradeMarkers(container, chart, series, markers) {
+    // Remove old markers if any
+    const oldMarkers = container.querySelectorAll('.trade-marker');
+    oldMarkers.forEach(el => el.remove());
+
+    const timeScale = chart.timeScale();
+    
+    try {
+        const updateMarkers = () => {
+            // Clear existing markers
+            const existingMarkers = container.querySelectorAll('.trade-marker');
+            existingMarkers.forEach(el => el.remove());
+
+            // Get visible time range to only draw visible markers
+            const visibleRange = timeScale.getVisibleRange();
+            if (!visibleRange) return;
+
+            // Filter markers to only visible ones and sample heavily for readability
+            let visibleMarkers = markers.filter(marker => {
+                return marker.time >= visibleRange.from && marker.time <= visibleRange.to;
+            });
+            
+            // Smart sampling: spread markers out evenly across time
+            const timeSpan = visibleRange.to - visibleRange.from;
+            const maxMarkers = 20; // Maximum markers to show at once
+            
+            if (visibleMarkers.length > maxMarkers) {
+                const step = Math.floor(visibleMarkers.length / maxMarkers);
+                visibleMarkers = visibleMarkers.filter((_, index) => index % step === 0);
+            }
+            
+            // Further reduce if still too many
+            if (visibleMarkers.length > maxMarkers) {
+                visibleMarkers = visibleMarkers.slice(0, maxMarkers);
+            }
+
+            visibleMarkers.forEach(marker => {
+                try {
+                    // Use the exact same coordinate conversion as charts.js
+                    const x = timeScale.timeToCoordinate(marker.time);
+                    const y = series.priceToCoordinate(marker.price);
+                    
+                    if (x == null || y == null || x < 0 || y < 0) return;
+
+                    // Create marker element exactly like charts.js vortex labels
+                    const markerEl = document.createElement('div');
+                    markerEl.className = 'trade-marker';
+                    
+                    // Apply styles exactly like charts.js
+                    markerEl.style.position = 'absolute';
+                    markerEl.style.left = `${Math.round(x)}px`;
+                    
+                    // Position above or below based on buy/sell
+                    if (marker.position === 'belowBar') {
+                        markerEl.style.top = `${Math.round(y + 15)}px`;
+                        markerEl.style.transform = 'translate(-50%, 0%)';
+                    } else {
+                        markerEl.style.top = `${Math.round(y - 15)}px`;
+                        markerEl.style.transform = 'translate(-50%, -100%)';
+                    }
+                    
+                    markerEl.style.padding = '1px 4px';
+                    markerEl.style.fontSize = '9px';
+                    markerEl.style.fontWeight = 'bold';
+                    markerEl.style.borderRadius = '3px';
+                    markerEl.style.pointerEvents = 'none';
+                    markerEl.style.background = marker.color;
+                    markerEl.style.color = 'white';
+                    markerEl.style.fontFamily = 'JetBrains Mono, monospace';
+                    markerEl.style.whiteSpace = 'nowrap';
+                    markerEl.style.zIndex = '1000';
+                    markerEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                    markerEl.style.border = '1px solid rgba(255,255,255,0.2)';
+                    
+                    // Add simplified text - just action and short price
+                    const arrow = marker.position === 'belowBar' ? '↑' : '↓';
+                    const shortPrice = marker.price ? `$${Math.round(marker.price / 1000)}k` : '';
+                    markerEl.textContent = `${arrow}${marker.text.substring(0,1)} ${shortPrice}`;
+                    
+                    container.appendChild(markerEl);
+                    
+                    console.log(`[trades] Positioned ${marker.text} marker at x:${Math.round(x)}, y:${Math.round(y)}`);
+                    
+                } catch (err) {
+                    console.warn('[trades] Failed to position marker:', err);
+                }
+            });
+
+            console.log(`[trades] Drew ${visibleMarkers.length} manual trade markers`);
+        };
+
+        // Update markers initially
+        updateMarkers();
+
+        // Update markers when chart scrolls/zooms
+        timeScale.subscribeVisibleTimeRangeChange(updateMarkers);
+
+        // Store cleanup function
+        container._cleanupTradeMarkers = () => {
+            timeScale.unsubscribeVisibleTimeRangeChange(updateMarkers);
+            const markers = container.querySelectorAll('.trade-marker');
+            markers.forEach(el => el.remove());
+        };
+
+    } catch (error) {
+        console.error('[trades] Error in manual marker rendering:', error);
+    }
+}
+
+/**
+ * Build buy→sell trade pairs to compute P&L
+ */
+function buildTradePairs(trades) {
+    const pairs = [];
+    if (!Array.isArray(trades) || trades.length === 0) return pairs;
+    let current = null;
+    trades.forEach(t => {
+        const ts = Math.floor(new Date(t.date).getTime() / 1000);
+        if (t.action === 'BUY' && !current) {
+            current = { entry: { timestamp: ts, price: t.price, raw: t } };
+        } else if (t.action === 'SELL' && current) {
+            current.exit = { timestamp: ts, price: t.price, raw: t };
+            const pnl = (current.exit.price - current.entry.price);
+            const pnlPercent = (pnl / current.entry.price) * 100;
+            current.pnl = pnl;
+            current.pnlPercent = pnlPercent;
+            pairs.push(current);
+            current = null;
+        }
+    });
+    return pairs;
+}
+
+/**
+ * Draw connecting lines between entry and exit trades via SVG overlay
+ */
+function drawTradeConnections(container, chart, series, tradePairs) {
+    // Remove old overlay if any
+    const old = container.querySelector('svg.trade-connections');
+    if (old) old.remove();
+    if (!tradePairs || tradePairs.length === 0) return;
+
+    const timeScale = chart.timeScale();
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'trade-connections');
+    svg.setAttribute('width', String(width));
+    svg.setAttribute('height', String(height));
+    svg.style.position = 'absolute';
+    svg.style.left = '0';
+    svg.style.top = '0';
+    svg.style.pointerEvents = 'none';
+    svg.style.zIndex = '900';
+
+    const render = () => {
+        // Clear previous children
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        tradePairs.forEach(p => {
+            try {
+                if (!p.entry || !p.exit) return;
+                const x1 = timeScale.timeToCoordinate(p.entry.timestamp);
+                const y1 = series.priceToCoordinate(p.entry.price);
+                const x2 = timeScale.timeToCoordinate(p.exit.timestamp);
+                const y2 = series.priceToCoordinate(p.exit.price);
+                if (x1 == null || y1 == null || x2 == null || y2 == null) return;
+                const color = p.pnl > 0 ? '#00ff88' : (p.pnl < 0 ? '#ff4757' : '#ffc107');
+                const line = document.createElementNS(svgNS, 'line');
+                line.setAttribute('x1', String(Math.round(x1)));
+                line.setAttribute('y1', String(Math.round(y1)));
+                line.setAttribute('x2', String(Math.round(x2)));
+                line.setAttribute('y2', String(Math.round(y2)));
+                line.setAttribute('stroke', color);
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('opacity', '0.7');
+                svg.appendChild(line);
+            } catch (err) {
+                console.warn('[trades] drawTradeConnections line error:', err);
+            }
+        });
+    };
+
+    // Initial render
+    render();
+    container.appendChild(svg);
+
+    // Update on zoom/scroll
+    timeScale.subscribeVisibleTimeRangeChange(() => {
+        render();
+    });
 }
 
 /**

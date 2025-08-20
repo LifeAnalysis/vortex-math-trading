@@ -673,6 +673,13 @@ header h1 {
     background: #000;
     border-radius: 8px;
     overflow: hidden;
+    position: relative;
+}
+
+.trade-marker {
+    position: absolute !important;
+    z-index: 1000 !important;
+    pointer-events: none !important;
 }
 
 .trades-table {
