@@ -252,80 +252,37 @@ async function renderPriceChartWithVortex(data) {
 
 function addTradeSignals(chart, series, dataPoints) {
     try {
-        // Get current strategy configuration from app state
-        const config = window.appState?.config || {
-            buySignal: 1,
-            sellSignal: 5,
-            holdSignal: 9,
-            teslaFilter: true,
-            sequenceFilter: true
-        };
-        
-        // Use strategy-based signals instead of hardcoded values
-        const buySignal = config.buySignal;
-        const sellSignal = config.sellSignal;
-        const holdSignal = config.holdSignal;
+        // Create trade signals based on vortex math rules
+        const buySignal = 1;  // Digital root 1 = cycle start
+        const sellSignal = 5; // Digital root 5 = cycle peak
+        const holdSignal = 9; // Digital root 9 = balance
         
         const markers = [];
         
         dataPoints.forEach(point => {
-            let signalType = null;
-            let signalColor = '#666';
-            let signalShape = 'circle';
-            let signalPosition = 'inBar';
-            
-            // PRIORITY 1: Tesla filter (matches fixed strategy logic)
-            if (config.teslaFilter && [3, 6, 9].includes(point.digitalRoot)) {
-                if (point.digitalRoot === 3) {
-                    signalType = 'TESLA BUY';
-                    signalColor = '#00e676';
-                    signalShape = 'arrowUp';
-                    signalPosition = 'belowBar';
-                } else if (point.digitalRoot === 6) {
-                    signalType = 'TESLA SELL';
-                    signalColor = '#ff1744';
-                    signalShape = 'arrowDown';
-                    signalPosition = 'aboveBar';
-                } else if (point.digitalRoot === 9) {
-                    signalType = 'TESLA HOLD';
-                    signalColor = '#ffc107';
-                    signalShape = 'circle';
-                    signalPosition = 'inBar';
-                }
-            }
-            // PRIORITY 2: Sequence filter check
-            else if (config.sequenceFilter && ![1,2,4,8,7,5].includes(point.digitalRoot)) {
-                // Skip - blocked by sequence filter
-                return;
-            }
-            // PRIORITY 3: Manual signals
-            else {
-                if (point.digitalRoot === buySignal) {
-                    signalType = 'BUY';
-                    signalColor = '#28a745';
-                    signalShape = 'arrowUp';
-                    signalPosition = 'belowBar';
-                } else if (point.digitalRoot === sellSignal) {
-                    signalType = 'SELL';
-                    signalColor = '#dc3545';
-                    signalShape = 'arrowDown';
-                    signalPosition = 'aboveBar';
-                } else if (point.digitalRoot === holdSignal) {
-                    signalType = 'HOLD';
-                    signalColor = '#ffc107';
-                    signalShape = 'circle';
-                    signalPosition = 'inBar';
-                }
-            }
-            
-            // Add marker if we have a valid signal
-            if (signalType) {
+            if (point.digitalRoot === buySignal) {
                 markers.push({
                     time: point.time,
-                    position: signalPosition,
-                    color: signalColor,
-                    shape: signalShape,
-                    text: signalType
+                    position: 'belowBar',
+                    color: '#28a745',
+                    shape: 'arrowUp',
+                    text: 'BUY'
+                });
+            } else if (point.digitalRoot === sellSignal) {
+                markers.push({
+                    time: point.time,
+                    position: 'aboveBar',
+                    color: '#dc3545',
+                    shape: 'arrowDown',
+                    text: 'SELL'
+                });
+            } else if (point.digitalRoot === holdSignal) {
+                markers.push({
+                    time: point.time,
+                    position: 'inBar',
+                    color: '#ffc107',
+                    shape: 'circle',
+                    text: 'HOLD'
                 });
             }
         });

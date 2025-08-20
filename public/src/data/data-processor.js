@@ -149,6 +149,9 @@ class DataProcessor {
                 teslaNumberOccurrences: teslaNumberCount,
                 teslaNumberPercentage: ((teslaNumberCount / dailyData.length) * 100).toFixed(2)
             },
+            // Add top-level properties for backward compatibility
+            doublingSequencePercentage: ((doublingSequenceCount / dailyData.length) * 100).toFixed(2),
+            teslaNumberPercentage: ((teslaNumberCount / dailyData.length) * 100).toFixed(2),
             dataQuality: {
                 totalRecords: dailyData.length,
                 missingPrices: dailyData.filter(d => d.price === null || d.price === undefined).length,
