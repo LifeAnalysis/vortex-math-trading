@@ -1036,31 +1036,54 @@ function updateTradesTable() {
     const positions = buildCompletedPositions(backtestResults.trades);
     let positionsHtml = '';
     if (positions.length > 0) {
+        // Calculate average holding period
+        const avgHoldingDays = positions.reduce((sum, p) => sum + p.daysHeld, 0) / positions.length;
+        
         positionsHtml += `
             <div class="positions-summary">
-                <h4>✅ Completed Positions</h4>
-                <table class="trades-table" id="positions-table">
+                <div class="positions-header">
+                    <h4>✅ Completed Positions</h4>
+                    <div class="avg-holding-time">
+                        <span class="metric-label">Average Held Position Time:</span>
+                        <span class="metric-value">${avgHoldingDays.toFixed(1)} days</span>
+                    </div>
+                </div>
+                <table class="trades-table" id="positions-table-sortable">
                     <thead>
                         <tr>
-                            <th>Entry Date</th>
-                            <th>Entry Price</th>
-                            <th>Exit Date</th>
-                            <th>Exit Price</th>
-                            <th>Days Held</th>
-                            <th>P&L</th>
-                            <th>P&L %</th>
+                            <th class="sortable" data-column="entryDate" data-type="date">
+                                Entry Date <span class="sort-indicator">⇅</span>
+                            </th>
+                            <th class="sortable" data-column="entryPrice" data-type="number">
+                                Entry Price <span class="sort-indicator">⇅</span>
+                            </th>
+                            <th class="sortable" data-column="exitDate" data-type="date">
+                                Exit Date <span class="sort-indicator">⇅</span>
+                            </th>
+                            <th class="sortable" data-column="exitPrice" data-type="number">
+                                Exit Price <span class="sort-indicator">⇅</span>
+                            </th>
+                            <th class="sortable" data-column="daysHeld" data-type="number">
+                                Days Held <span class="sort-indicator">⇅</span>
+                            </th>
+                            <th class="sortable" data-column="pnl" data-type="number">
+                                P&L <span class="sort-indicator">⇅</span>
+                            </th>
+                            <th class="sortable" data-column="pnlPercent" data-type="number">
+                                P&L % <span class="sort-indicator">⇅</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         ${positions.map(p => `
                             <tr>
-                                <td>${p.entry.date}</td>
-                                <td>$${p.entry.price.toLocaleString()}</td>
-                                <td>${p.exit.date}</td>
-                                <td>$${p.exit.price.toLocaleString()}</td>
-                                <td>${p.daysHeld}</td>
-                                <td class="${p.pnl >= 0 ? 'positive' : 'negative'}">$${p.pnl.toFixed(2)}</td>
-                                <td class="${p.pnl >= 0 ? 'positive' : 'negative'}">${p.pnlPercent.toFixed(2)}%</td>
+                                <td data-value="${p.entry.date}">${p.entry.date}</td>
+                                <td data-value="${p.entry.price}">$${p.entry.price.toLocaleString()}</td>
+                                <td data-value="${p.exit.date}">${p.exit.date}</td>
+                                <td data-value="${p.exit.price}">$${p.exit.price.toLocaleString()}</td>
+                                <td data-value="${p.daysHeld}">${p.daysHeld}</td>
+                                <td data-value="${p.pnl}" class="${p.pnl >= 0 ? 'positive' : 'negative'}">$${p.pnl.toFixed(2)}</td>
+                                <td data-value="${p.pnlPercent}" class="${p.pnl >= 0 ? 'positive' : 'negative'}">${p.pnlPercent.toFixed(2)}%</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1166,7 +1189,7 @@ function updateTradesTable() {
     html += '</tbody></table>';
     tradesContainer.innerHTML = positionsHtml + html;
     
-    // Add sort functionality
+    // Add sort functionality for both tables
     setupTableSorting();
 }
 
@@ -1174,41 +1197,108 @@ function updateTradesTable() {
  * Setup table sorting functionality
  */
 function setupTableSorting() {
-    const table = document.getElementById('trades-table-sortable');
-    if (!table) return;
+    // Setup sorting for both positions table and trades table
+    const tables = ['positions-table-sortable', 'trades-table-sortable'];
     
-    const headers = table.querySelectorAll('th.sortable');
-    let currentSort = { column: null, direction: 'asc' };
-    
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const column = header.dataset.column;
-            const type = header.dataset.type;
-            
-            // Toggle direction if same column, otherwise default to ascending
-            if (currentSort.column === column) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort.direction = 'asc';
-            }
-            currentSort.column = column;
-            
-            // Update sort indicators
-            headers.forEach(h => {
-                const indicator = h.querySelector('.sort-indicator');
-                if (h === header) {
-                    indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
-                    h.classList.add('sorted');
+    tables.forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        
+        const headers = table.querySelectorAll('th.sortable');
+        let currentSort = { column: null, direction: 'asc' };
+        
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.column;
+                const type = header.dataset.type;
+                
+                // Toggle direction if same column, otherwise default to ascending
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
                 } else {
-                    indicator.textContent = '⇅';
-                    h.classList.remove('sorted');
+                    currentSort.direction = 'asc';
+                }
+                currentSort.column = column;
+                
+                // Update sort indicators
+                headers.forEach(h => {
+                    const indicator = h.querySelector('.sort-indicator');
+                    if (h === header) {
+                        indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                        h.classList.add('sorted');
+                    } else {
+                        indicator.textContent = '⇅';
+                        h.classList.remove('sorted');
+                    }
+                });
+                
+                // Sort the table (use different column mappings for different tables)
+                if (tableId === 'positions-table-sortable') {
+                    sortPositionsTable(table, column, type, currentSort.direction);
+                } else {
+                    sortTable(table, column, type, currentSort.direction);
                 }
             });
-            
-            // Sort the table
-            sortTable(table, column, type, currentSort.direction);
         });
     });
+}
+
+/**
+ * Sort positions table by column
+ */
+function sortPositionsTable(table, column, type, direction) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    rows.sort((a, b) => {
+        let aVal, bVal;
+        
+        // Get cell based on column index for positions table
+        const columnIndex = {
+            'entryDate': 0,
+            'entryPrice': 1,
+            'exitDate': 2,
+            'exitPrice': 3,
+            'daysHeld': 4,
+            'pnl': 5,
+            'pnlPercent': 6
+        };
+        
+        const cellIndex = columnIndex[column];
+        const aCells = a.querySelectorAll('td');
+        const bCells = b.querySelectorAll('td');
+        
+        aVal = aCells[cellIndex]?.dataset.value;
+        bVal = bCells[cellIndex]?.dataset.value;
+        
+        // Convert values based on type
+        if (type === 'date') {
+            aVal = new Date(aVal);
+            bVal = new Date(bVal);
+        } else if (type === 'number') {
+            aVal = parseFloat(aVal) || 0;
+            bVal = parseFloat(bVal) || 0;
+        }
+        // string type uses values as-is
+        
+        // Handle null/undefined values
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        
+        let comparison = 0;
+        if (type === 'number' || type === 'date') {
+            comparison = aVal - bVal;
+        } else {
+            comparison = aVal.toString().localeCompare(bVal.toString());
+        }
+        
+        return direction === 'asc' ? comparison : -comparison;
+    });
+    
+    // Clear tbody and append sorted rows
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
 }
 
 /**

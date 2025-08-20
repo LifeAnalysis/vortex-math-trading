@@ -683,6 +683,41 @@ header h1 {
     pointer-events: none !important;
 }
 
+.positions-summary {
+    margin-bottom: 30px;
+}
+
+.positions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.positions-header h4 {
+    margin: 0;
+    color: #00ff88;
+    font-size: 1.1em;
+}
+
+.positions-summary .avg-holding-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e0e0e0;
+}
+
+.positions-summary .metric-label {
+    color: #b0b0b0;
+    font-size: 0.9em;
+}
+
+.positions-summary .metric-value {
+    color: #00ff88;
+    font-weight: bold;
+    font-family: var(--font-family-mono);
+}
+
 .trades-table {
     width: 100%;
     border-collapse: collapse;
