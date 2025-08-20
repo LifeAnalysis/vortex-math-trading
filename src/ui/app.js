@@ -584,6 +584,114 @@ function filterDataByDateRange(data, startDate, endDate) {
 }
 
 /**
+ * Create a visual trade chart showing buy/sell points
+ */
+function createTradeChart() {
+    if (!backtestResults || !processedData || !window.LightweightCharts) {
+        return;
+    }
+    
+    const chartContainer = document.getElementById('trade-chart');
+    if (!chartContainer) return;
+    
+    // Clear any existing chart
+    chartContainer.innerHTML = '';
+    
+    try {
+        // Create the chart
+        const chart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.clientWidth,
+            height: 300,
+            layout: {
+                background: { type: 'solid', color: '#000000' },
+                textColor: '#e0e0e0',
+                fontSize: 11,
+                fontFamily: 'JetBrains Mono, monospace'
+            },
+            grid: {
+                vertLines: { color: 'rgba(0, 255, 136, 0.1)' },
+                horzLines: { color: 'rgba(0, 255, 136, 0.1)' }
+            },
+            rightPriceScale: {
+                borderColor: 'rgba(0, 255, 136, 0.3)',
+                textColor: '#00ff88'
+            },
+            timeScale: {
+                borderColor: 'rgba(0, 255, 136, 0.3)',
+                textColor: '#00ff88',
+                timeVisible: true,
+                secondsVisible: false
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode?.Normal || 1,
+                vertLine: { color: '#00ff88', width: 1, style: 2 },
+                horzLine: { color: '#00ff88', width: 1, style: 2 }
+            }
+        });
+        
+        // Filter data to match backtest period
+        const startDate = appState.config.startDate;
+        const endDate = appState.config.endDate;
+        const filteredData = processedData.dailyData.filter(d => 
+            d.date >= startDate && d.date <= endDate
+        );
+        
+        // Prepare price data for chart
+        const priceData = filteredData.map(d => ({
+            time: Math.floor(d.timestamp / 1000),
+            value: d.price
+        }));
+        
+        // Add price line
+        const priceSeries = chart.addSeries(LightweightCharts.LineSeries, {
+            color: '#87CEEB',
+            lineWidth: 2,
+            title: 'Price'
+        });
+        priceSeries.setData(priceData);
+        
+        // Add trade markers
+        const markers = [];
+        backtestResults.trades.forEach(trade => {
+            const tradeDate = new Date(trade.date);
+            const timestamp = Math.floor(tradeDate.getTime() / 1000);
+            
+            if (trade.action === 'BUY') {
+                markers.push({
+                    time: timestamp,
+                    position: 'belowBar',
+                    color: '#26a69a',
+                    shape: 'arrowUp',
+                    text: `BUY $${trade.price.toLocaleString()}`,
+                    size: 1.2
+                });
+            } else if (trade.action === 'SELL') {
+                markers.push({
+                    time: timestamp,
+                    position: 'aboveBar',
+                    color: '#ef5350',
+                    shape: 'arrowDown',
+                    text: `SELL $${trade.price.toLocaleString()}`,
+                    size: 1.2
+                });
+            }
+        });
+        
+        priceSeries.setMarkers(markers);
+        
+        // Fit content and store chart reference
+        chart.timeScale().fitContent();
+        chartContainer._tradeChart = chart;
+        
+        console.log(`[trades] Created trade chart with ${markers.length} markers`);
+        
+    } catch (error) {
+        console.error('[trades] Error creating trade chart:', error);
+        chartContainer.innerHTML = '<p style="color: #ff6b6b; padding: 20px;">Unable to load trade chart</p>';
+    }
+}
+
+/**
  * Update the trades table
  */
 function updateTradesTable() {
@@ -593,6 +701,9 @@ function updateTradesTable() {
         tradesContainer.innerHTML = '<p>No trades executed during the backtest period.</p>';
         return;
     }
+    
+    // Create the trade chart first
+    createTradeChart();
     
     // Calculate average holding period for completed trades
     const completedTrades = backtestResults.trades.filter(trade => 
