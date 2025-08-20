@@ -635,7 +635,7 @@ function createTradeChart() {
         // Create the chart - copy from charts.js
         const chart = window.LightweightCharts.createChart(chartContainer, {
             width: chartContainer.clientWidth || 800,
-            height: 300,
+            height: 450,
             autoSize: true,
             layout: {
                 background: { type: 'solid', color: '#000000' },
@@ -942,6 +942,23 @@ function buildTradePairs(trades) {
 }
 
 /**
+ * Build completed positions data for table view
+ */
+function buildCompletedPositions(trades) {
+    const pairs = buildTradePairs(trades);
+    return pairs.map(p => {
+        const daysHeld = Math.max(1, Math.round((new Date(p.exit.raw.date) - new Date(p.entry.raw.date)) / (1000 * 60 * 60 * 24)));
+        return {
+            entry: { date: p.entry.raw.date, price: p.entry.price },
+            exit: { date: p.exit.raw.date, price: p.exit.price },
+            pnl: p.pnl,
+            pnlPercent: p.pnlPercent,
+            daysHeld
+        };
+    });
+}
+
+/**
  * Draw connecting lines between entry and exit trades via SVG overlay
  */
 function drawTradeConnections(container, chart, series, tradePairs) {
@@ -1014,6 +1031,43 @@ function updateTradesTable() {
     
     // Create the trade chart first
     createTradeChart();
+    
+    // Build completed positions table (entry→exit)
+    const positions = buildCompletedPositions(backtestResults.trades);
+    let positionsHtml = '';
+    if (positions.length > 0) {
+        positionsHtml += `
+            <div class="positions-summary">
+                <h4>✅ Completed Positions</h4>
+                <table class="trades-table" id="positions-table">
+                    <thead>
+                        <tr>
+                            <th>Entry Date</th>
+                            <th>Entry Price</th>
+                            <th>Exit Date</th>
+                            <th>Exit Price</th>
+                            <th>Days Held</th>
+                            <th>P&L</th>
+                            <th>P&L %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${positions.map(p => `
+                            <tr>
+                                <td>${p.entry.date}</td>
+                                <td>$${p.entry.price.toLocaleString()}</td>
+                                <td>${p.exit.date}</td>
+                                <td>$${p.exit.price.toLocaleString()}</td>
+                                <td>${p.daysHeld}</td>
+                                <td class="${p.pnl >= 0 ? 'positive' : 'negative'}">$${p.pnl.toFixed(2)}</td>
+                                <td class="${p.pnl >= 0 ? 'positive' : 'negative'}">${p.pnlPercent.toFixed(2)}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
     
     // Calculate average holding period for completed trades
     const completedTrades = backtestResults.trades.filter(trade => 
@@ -1110,7 +1164,7 @@ function updateTradesTable() {
     });
     
     html += '</tbody></table>';
-    tradesContainer.innerHTML = html;
+    tradesContainer.innerHTML = positionsHtml + html;
     
     // Add sort functionality
     setupTableSorting();
